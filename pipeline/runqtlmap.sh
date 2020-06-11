@@ -13,10 +13,10 @@ module load nextflow
 
 git clone https://github.com/kerimoff/qtlmap.git
 
-/gpfs/hpc/home/andreasv/baka/nextflow/nextflow \
-	run /gpfs/hpc/home/andreasv/baka/pipeline/qtlmap/main_multi_study.nf \
+~/cage/nextflow/nextflow \
+	run ~/cage/pipeline/qtlmap/main_multi_study.nf \
 	-profile tartu_hpc \
-	--studyFile /gpfs/hpc/home/andreasv/baka/qtlmap_prep/sources.tsv \
+	--studyFile ~/cage/qtlmap_prep/sources.tsv \
 	--cis_window 200000 \
 	--run_permutation true \
 	-resume

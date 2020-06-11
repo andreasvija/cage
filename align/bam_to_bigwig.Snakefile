@@ -1,15 +1,8 @@
-#!/bin/bash
 #submit batch jobs in align
 #use screen
 #ssh stage1
 #module load python-3.6.0
 #python script requires a created SlurmOut folder
-
-#dry run
-#snakemake -s bam_to_bigwig.Snakefile -n -p out_bigwig.txt --configfile config.yaml > drysnakeoutput
-#visualize
-#snakemake -s bam_to_bigwig.Snakefile --dag out_bigwig.txt --configfile config.yaml | dot -Tsvg > dag.svg
-#run in cluster
 #snakemake -s bam_to_bigwig.Snakefile --cluster ../snakemake_submit_UT.py -p out_bigwig.txt --configfile config.yaml --jobs 8
 
 rule make_all:
@@ -40,7 +33,7 @@ rule convert_geuvadis:
 		module load bedtools/2.27.0
 		bedtools genomecov -bg -ibam {input.infile} > {params.intermediate}
 		C_COLLATE=C sort -k1,1 -k2,2n {params.intermediate} -o {params.intermediate}
-		
+
 		/gpfs/hpc/home/andreasv/bedGraphToBigWig/bedGraphToBigWig {params.intermediate} {params.chrom_sizes} {output.outfile}
 		rm {params.intermediate}
 		"""
@@ -61,7 +54,7 @@ rule convert_cage:
 		module load bedtools/2.27.0
 		bedtools genomecov -bg -ibam {input.infile} > {params.intermediate}
 		C_COLLATE=C sort -k1,1 -k2,2n {params.intermediate} -o {params.intermediate}
-		
+
 		/gpfs/hpc/home/andreasv/bedGraphToBigWig/bedGraphToBigWig {params.intermediate} {params.chrom_sizes} {output.outfile}
 		rm {params.intermediate}
 		"""

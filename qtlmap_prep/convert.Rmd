@@ -11,13 +11,13 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-# This notebook uses featureCounts output and promoter annotations to build a count matrix 
+# This notebook uses featureCounts output and promoter annotations to build a count matrix
 # and converts promoter annotations and sample metadata to the format qtlmap wants
 
 # except for the third block, which is meant to be run before even converting promoter annotations to gtf format
 
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-setwd("C:/Proge/Ülikool/baka/qtlmap_prep")
+setwd("~/cage/qtlmap_prep")
 ```
 
 ```{r}
@@ -49,16 +49,16 @@ not_dupes = promoterAnnots %>%
 
 promoterAnnots = inner_join(promoterAnnots, not_dupes, by="tss_id")
 
-# remove genes not in our data and whose naems have multiple ID-s
+# remove genes not in our data and whose names have multiple ID-s
 
 promoterMeta = read_tsv("transcript_usage_Ensembl_96_phenotype_metadata.tsv", col_types="ccccciicccci") %>%
   select(gene_id, gene_name) %>%
   unique()
 promoterMeta = promoterMeta[promoterMeta$gene_name %in% promoterAnnots$gene_name,]
 
-duplicatedGenes = promoterMeta %>% 
-  group_by(gene_name) %>% 
-  summarise(n=n()) %>% 
+duplicatedGenes = promoterMeta %>%
+  group_by(gene_name) %>%
+  summarise(n=n()) %>%
   ungroup() %>%
   filter(n > 1)
 duplicatedGenes = duplicatedGenes$gene_name
@@ -91,8 +91,8 @@ assigned = as.numeric(summ[,1])
 unmapped = as.numeric(summ[,2])
 nofeatures = as.numeric(summ[,3])
 
-ggplot() + geom_histogram(aes(x=assigned, fill="assigned")) + 
-  geom_histogram(aes(x=unmapped, fill="unmapped")) + 
+ggplot() + geom_histogram(aes(x=assigned, fill="assigned")) +
+  geom_histogram(aes(x=unmapped, fill="unmapped")) +
   geom_histogram(aes(x=nofeatures, fill="nofeatures"))
 
 assigned_total = sum(assigned)
@@ -147,13 +147,13 @@ geneCounts = geneCountsInPerson %>%
 summary(geneCountsInPerson)
 
 ggplot(data=geneCountsInPerson, aes(x=geneCount+1e-1)) + #+1e-1 allows to see zeroes
-  geom_histogram() + 
-  scale_x_log10() + 
+  geom_histogram() +
+  scale_x_log10() +
   labs(title="Promoter reads per gene in one person")
 
-ggplot(data=geneCounts, aes(x=geneCount+1e-1)) + 
-  geom_histogram() + 
-  scale_x_log10() + 
+ggplot(data=geneCounts, aes(x=geneCount+1e-1)) +
+  geom_histogram() +
+  scale_x_log10() +
   labs(title="Promoter reads per gene over all people")
 '
 ```
@@ -171,8 +171,8 @@ data = data %>%
   mutate(promoterProportion = count/geneCount) %>%
   select(gene, sample, promoter, promoterProportion)
 
-ggplot(mapping=aes(x=data$promoterProportion)) + 
-  geom_histogram() + 
+ggplot(mapping=aes(x=data$promoterProportion)) +
+  geom_histogram() +
   labs(title="Proportions of promoters' importances")
 ```
 
@@ -218,30 +218,30 @@ write.table(countMatrix, file="countMatrix.tsv", sep="\t", row.names=FALSE, quot
 # calculate placeholder phenotype_pos as promotor average position
 
 promoterMetadata = read_tsv("FANTOM5_promoter_annotations.tsv", col_types="ciciciiccii") %>%
-  mutate(phenotype_id=tss_id, group_id=gene_name, gene_id=gene_name, chromosome=chr, promoter_pos=peak_start, tss_pos=tss_start, strand=if_else(strand == "+", "1", "-1")) %>% 
+  mutate(phenotype_id=tss_id, group_id=gene_name, gene_id=gene_name, chromosome=chr, promoter_pos=peak_start, tss_pos=tss_start, strand=if_else(strand == "+", "1", "-1")) %>%
   select(phenotype_id, group_id, gene_id, chromosome, promoter_pos, tss_pos, strand)
 
 max_pos = max(max(promoterMetadata$tss_pos), max(promoterMetadata$promoter_pos))
 
 genePromoterPositions = promoterMetadata %>%
   group_by(gene_id) %>%
-  summarise(n=n(), avg_tss=mean(tss_pos), furthest_tss=max(tss_pos)-min(tss_pos), 
+  summarise(n=n(), avg_tss=mean(tss_pos), furthest_tss=max(tss_pos)-min(tss_pos),
             avg_prom=mean(promoter_pos), furthest_prom=max(promoter_pos)-min(promoter_pos)) %>%
   ungroup()
 
-ggplot(genePromoterPositions, aes(x=furthest_tss+1e-1)) + 
-  geom_histogram() + 
-  scale_x_log10() + 
+ggplot(genePromoterPositions, aes(x=furthest_tss+1e-1)) +
+  geom_histogram() +
+  scale_x_log10() +
   labs(title="Every gene's TSS span")
 
-ggplot(genePromoterPositions, aes(x=furthest_prom+1e-1)) + 
-  geom_histogram() + 
-  scale_x_log10() + 
+ggplot(genePromoterPositions, aes(x=furthest_prom+1e-1)) +
+  geom_histogram() +
+  scale_x_log10() +
   labs(title="Every gene's promoter span")
 
 # some very large TSS spans here?
 
-sum(genePromoterPositions$furthest_prom > 200000)/length(genePromoterPositions$furthest_prom) 
+sum(genePromoterPositions$furthest_prom > 200000)/length(genePromoterPositions$furthest_prom)
 # 2.5% of genes won't even have all promoter locations captured in a 200kb search range, 0.6% for 500kb, 0.1% for 1Mb
 
 geneAvgs = promoterMetadata %>%
@@ -264,7 +264,7 @@ promoterMeta = read_tsv("transcript_usage_Ensembl_96_phenotype_metadata.tsv", co
 promoterMetadata = promoterMetadata %>% left_join(promoterMeta, by='gene_id')
 promoterMetadata$phenotype_pos[!(is.na(promoterMetadata$gene_pos))] = promoterMetadata$gene_pos[!(is.na(promoterMetadata$gene_pos))]
 
-promoterMetadata = promoterMetadata %>% 
+promoterMetadata = promoterMetadata %>%
   select(phenotype_id, group_id, gene_id, chromosome, phenotype_pos, strand)
 write.table(promoterMetadata, file="phenotypeMetadata.tsv", sep="\t", row.names=FALSE, quote=FALSE)
 ```
