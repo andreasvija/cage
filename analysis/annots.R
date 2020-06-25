@@ -38,9 +38,8 @@ txrevise_results = txrevise_results %>%
 shared_genes = intersect(bwa_results$gene, txrevise_results$gene)
 shared_genes = shared_genes
 
-promoter_annots = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ciciciiccii") %>%
-  filter(gene_name %in% shared_genes) %>%
-  select(gene_name, peak_start, peak_end, strand, tss_id, chr)
+promoter_annots = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciic") %>%
+  filter(gene_name %in% shared_genes)
 
 
 upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise.grp_1.upstream.gff3")
@@ -191,8 +190,8 @@ for (gene in shared_genes) { # c("ENSG00000151694")
     row = spec[i,]
     rangeslists = c(rangeslists,
                     GRanges(seqnames=2,
-                            ranges=IRanges(as.numeric(spec[i,2]), as.numeric(spec[i,3])),
-                            strand=as.character(spec[i,4])))
+                            ranges=IRanges(as.numeric(spec[i,4]), as.numeric(spec[i,5])),
+                            strand=as.character(spec[i,6])))
   }
   names(rangeslists) = spec$tss_id
 
@@ -201,8 +200,8 @@ for (gene in shared_genes) { # c("ENSG00000151694")
     row = spec_wide[i,]
     rangeslists_wide = c(rangeslists_wide,
                          GRanges(seqnames=2,
-                                 ranges=IRanges(as.numeric(spec_wide[i,2]), as.numeric(spec_wide[i,3])),
-                                 strand=as.character(spec_wide[i,4])))
+                                 ranges=IRanges(as.numeric(spec_wide[i,4]), as.numeric(spec_wide[i,5])),
+                                 strand=as.character(spec_wide[i,6])))
   }
   names(rangeslists_wide) = spec_wide$tss_id
 

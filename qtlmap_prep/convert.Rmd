@@ -14,8 +14,6 @@ editor_options:
 # This notebook uses featureCounts output and promoter annotations to build a count matrix
 # and converts promoter annotations and sample metadata to the format qtlmap wants
 
-# except for the third block, which is meant to be run before even converting promoter annotations to gtf format
-
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 setwd("~/cage/qtlmap_prep")
 ```
@@ -30,57 +28,6 @@ library("tidyr")
 set.seed(123)
 ```
 
-
-```{r}
-
-# remove promoters with multiple genes from promoter annotations
-
-promoterAnnots = read_tsv("FANTOM5_promoter_annotations.tsv", col_types="ciciciiccii")
-'
-#dim(table(data$promoter)[table(data$promoter) != 1])/length(unique(data$promoter)) # <0.7% promoters removed by removing duplicates
-
-not_dupes = promoterAnnots %>%
-  select(tss_id) %>%
-  group_by(tss_id) %>%
-  mutate(n=n()) %>%
-  ungroup() %>%
-  filter(n==1) %>%
-  select(tss_id)
-
-promoterAnnots = inner_join(promoterAnnots, not_dupes, by="tss_id")
-
-# remove genes not in our data and whose names have multiple ID-s
-
-promoterMeta = read_tsv("transcript_usage_Ensembl_96_phenotype_metadata.tsv", col_types="ccccciicccci") %>%
-  select(gene_id, gene_name) %>%
-  unique()
-promoterMeta = promoterMeta[promoterMeta$gene_name %in% promoterAnnots$gene_name,]
-
-duplicatedGenes = promoterMeta %>%
-  group_by(gene_name) %>%
-  summarise(n=n()) %>%
-  ungroup() %>%
-  filter(n > 1)
-duplicatedGenes = duplicatedGenes$gene_name
-
-promoterMeta = promoterMeta[!(promoterMeta$gene_name %in% duplicatedGenes),]
-
-# make gene column ENSEMBL ID
-
-joined = inner_join(promoterAnnots, promoterMeta, by=c("gene_name"))
-fantom_genes = unique(promoterAnnots$gene_name)
-overlap_genes = unique(joined$gene_name)
-
-1 - length(overlap_genes)/length(fantom_genes) # <9% genes not mapped uniquely, most LOCXXXXX (what means?), others probably findable in Ensembl
-missing = fantom_genes[!(fantom_genes %in% overlap_genes)]
-
-promoterAnnots = left_join(promoterAnnots, promoterMeta, by=c("gene_name"))
-promoterAnnots$gene_name[!is.na(promoterAnnots$gene_id)] = promoterAnnots$gene_id[!is.na(promoterAnnots$gene_id)]
-promoterAnnots = promoterAnnots %>% select(-gene_id)
-
-write.table(promoterAnnots, file="FANTOM5_promoter_annotations.tsv", sep="\t", row.names=FALSE, quote=FALSE)
-'
-```
 
 ```{r}
 summ = read_tsv("bwa.counts.summary", col_types = paste0(c("c", rep("n", 154)), collapse=""))
@@ -121,8 +68,7 @@ colnames(data) = unname(sapply(colnames(data), renamer))
 
 
 ```{r}
-genepromoters = read_tsv("FANTOM5_promoter_annotations.tsv", col_names=c("promoter", "temp", "gene"), skip=1)
-genepromoters = select(genepromoters, -"temp")
+genepromoters = read_tsv("FANTOM5_promoter_annotations.tsv", col_names=c("promoter", "gene"), skip=1)
 
 # add gene name in addition to promoter
 data = inner_join(genepromoters, data, by="promoter")
@@ -217,29 +163,20 @@ write.table(countMatrix, file="countMatrix.tsv", sep="\t", row.names=FALSE, quot
 
 # calculate placeholder phenotype_pos as promotor average position
 
-promoterMetadata = read_tsv("FANTOM5_promoter_annotations.tsv", col_types="ciciciiccii") %>%
-  mutate(phenotype_id=tss_id, group_id=gene_name, gene_id=gene_name, chromosome=chr, promoter_pos=peak_start, tss_pos=tss_start, strand=if_else(strand == "+", "1", "-1")) %>%
-  select(phenotype_id, group_id, gene_id, chromosome, promoter_pos, tss_pos, strand)
-
-max_pos = max(max(promoterMetadata$tss_pos), max(promoterMetadata$promoter_pos))
+promoterMetadata = read_tsv("FANTOM5_promoter_annotations.tsv", col_types="ccciic") %>%
+  mutate(phenotype_id=tss_id, group_id=gene_name, gene_id=gene_name, chromosome=chr, 
+         promoter_pos=peak_start, strand=if_else(strand == "+", "1", "-1")) %>%
+  select(phenotype_id, group_id, gene_id, chromosome, promoter_pos, strand)
 
 genePromoterPositions = promoterMetadata %>%
   group_by(gene_id) %>%
-  summarise(n=n(), avg_tss=mean(tss_pos), furthest_tss=max(tss_pos)-min(tss_pos),
-            avg_prom=mean(promoter_pos), furthest_prom=max(promoter_pos)-min(promoter_pos)) %>%
+  summarise(n=n(), avg_prom=mean(promoter_pos), furthest_prom=max(promoter_pos) - min(promoter_pos)) %>%
   ungroup()
-
-ggplot(genePromoterPositions, aes(x=furthest_tss+1e-1)) +
-  geom_histogram() +
-  scale_x_log10() +
-  labs(title="Every gene's TSS span")
 
 ggplot(genePromoterPositions, aes(x=furthest_prom+1e-1)) +
   geom_histogram() +
   scale_x_log10() +
   labs(title="Every gene's promoter span")
-
-# some very large TSS spans here?
 
 sum(genePromoterPositions$furthest_prom > 200000)/length(genePromoterPositions$furthest_prom)
 # 2.5% of genes won't even have all promoter locations captured in a 200kb search range, 0.6% for 500kb, 0.1% for 1Mb

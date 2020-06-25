@@ -78,7 +78,7 @@ sample_data = data_frame(sample_id=summ$sample_id, scaling_factor=summ$N/1000000
 
 to_visualize = read_tsv("bwa_better.tsv")
 
-promoterMetadata = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ciciciiccii") %>%
+promoterMetadata = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciic") %>%
   filter(gene_name %in% to_visualize$gene)
 
 
@@ -110,8 +110,8 @@ temp = tryCatch({
     row = spec[i,]
     rangeslists = c(rangeslists,
                     GRanges(seqnames=2,
-                            ranges=IRanges(as.numeric(spec[i,6]), as.numeric(spec[i,7])),
-                            strand=as.character(spec[i,9])))
+                            ranges=IRanges(as.numeric(spec[i,4]), as.numeric(spec[i,5])),
+                            strand=as.character(spec[i,6])))
   }
   names(rangeslists) = spec$tss_id
 
@@ -120,8 +120,8 @@ temp = tryCatch({
     row = spec_wide[i,]
     rangeslists_wide = c(rangeslists_wide,
                          GRanges(seqnames=2,
-                                 ranges=IRanges(as.numeric(spec_wide[i,6]), as.numeric(spec_wide[i,7])),
-                                 strand=as.character(spec_wide[i,9])))
+                                 ranges=IRanges(as.numeric(spec_wide[i,4]), as.numeric(spec_wide[i,5])),
+                                 strand=as.character(spec_wide[i,6])))
   }
   names(rangeslists_wide) = spec_wide$tss_id
 

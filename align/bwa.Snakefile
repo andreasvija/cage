@@ -3,7 +3,7 @@
 #ssh stage1
 #module load python-3.6.0
 #python script requires a created SlurmOut folder
-#snakemake -s bwa.Snakefile --cluster ../snakemake_submit_UT.py -p out.txt --configfile config.yaml --jobs 8
+#snakemake -s bwa.Snakefile --cluster snakemake_submit_UT.py -p out.txt --configfile config.yaml --jobs 8
 
 rule make_all:
 	input:
