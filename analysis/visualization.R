@@ -65,7 +65,7 @@ colnames(summ) = unname(sapply(colnames(summ), renamer))
 summ = t(summ[1,2:length(summ)])
 summ = data_frame(sample_id=rownames(summ), N=summ)
 
-summ_ = read_tsv("geuvadis_counts.txt") #TODO: where is this from?
+summ_ = read_tsv("geuvadis_counts.txt")
 summ_ = colSums(summ_[,-1])
 summ_ = data_frame(sample_id=labels(summ_), N=summ_) %>%
   filter(sample_id %in% sample_mapping_$sample_id) # let's only look at european individuals
