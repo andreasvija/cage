@@ -5,17 +5,18 @@ align/.snakemake/
 align/out.txt
 align/progress.txt
 
+qtlmap_prep/countMatrix.tsv
+
 pipeline/*
 !pipeline/reset.sh
 !pipeline/cage.sh
 !pipeline/annots.sh
-qtlmap_prep/countMatrix.tsv
-
-*.Rhistory
-nextflow/
-*.bw
 
 analysis/plots/
 analysis/geuvadis_counts.txt
 analysis/txrevise_Ensembl_96_CAGE_10bp_phenotype_metadata_filtered.tsv
 *.gff3
+
+*.Rhistory
+nextflow/
+*.bw
