@@ -1,4 +1,4 @@
-samples: 
+samples:
     - ERR2021349
     - ERR2021350
     - ERR2021351
@@ -154,7 +154,7 @@ samples:
     - ERR2021501
     - ERR2021502
 
-samples_geuvadis: 
+samples_geuvadis:
     - ERR188021
     - ERR188022
     - ERR188023
