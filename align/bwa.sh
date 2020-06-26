@@ -1,4 +1,5 @@
 #!/bin/bash
+# screen, ssh stage1
 
 #SBATCH -p main
 #SBATCH -J bwa
