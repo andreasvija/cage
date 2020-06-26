@@ -19,7 +19,6 @@ set.seed(123)
 
 
 
-
 sample_mapping = read_tsv("../qtlmap_prep/sampleMetadata.tsv") %>%
   select(sample_id, genotype_id)
 sample_mapping_ = read_tsv("GEUVADIS_EUR.tsv") %>%
@@ -89,7 +88,7 @@ exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 
 
 
-
+start_time = Sys.time()
 for (n in c(1: (dim(to_visualize)[1]) )) { # c(1: (dim(to_visualize)[1]) )
 temp = tryCatch({
 
@@ -173,3 +172,4 @@ temp = tryCatch({
 
 }, error = function(e){print(e)})
 }
+Sys.time() - start_time

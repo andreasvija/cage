@@ -47,9 +47,9 @@ unmapped_total = sum(unmapped)
 nofeatures_total = sum(nofeatures)
 total = assigned_total + unmapped_total + nofeatures_total
 
-assigned_total / total #  35.4%
+assigned_total / total #  34.0%
 unmapped_total / total #   4.8%
-nofeatures_total / total #59.8%
+nofeatures_total / total #61.2%
 ```
 
 
@@ -107,8 +107,8 @@ ggplot(data=geneCounts, aes(x=geneCount+1e-1)) +
 ```{r}
 # filter out non-detected genes
 lower_threshold = 0
-commonGenes = (filter(geneCounts, geneCount > lower_threshold))$gene #1070/21841 are zeroes
-data = filter(data, gene %in% commonGenes) #278278/15634388 samples removed
+commonGenes = (filter(geneCounts, geneCount > lower_threshold))$gene # 946 / 20 201 are zeroes (4.7%)
+data = filter(data, gene %in% commonGenes) # 245 476 / 14 424 102 samples removed (1.7%)
 
 #calculate promoter proportions
 data = inner_join(geneCountsInPerson, data, by=c("gene", "sample"))
@@ -179,7 +179,7 @@ ggplot(genePromoterPositions, aes(x=furthest_prom+1e-1)) +
   labs(title="Every gene's promoter span")
 
 sum(genePromoterPositions$furthest_prom > 200000)/length(genePromoterPositions$furthest_prom)
-# 2.5% of genes won't even have all promoter locations captured in a 200kb search range, 0.6% for 500kb, 0.1% for 1Mb
+# 2.7% of genes won't even have all promoter locations captured in a 200kb search range
 
 geneAvgs = promoterMetadata %>%
   group_by(gene_id) %>%
