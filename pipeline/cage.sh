@@ -11,10 +11,10 @@ module load java-1.8.0_40
 module load singularity
 module load nextflow
 
-git clone https://github.com/kerimoff/qtlmap.git
+git clone https://github.com/eQTL-Catalogue/qtlmap.git
 
 ~/cage/nextflow/nextflow \
-	run ~/cage/pipeline/qtlmap/main_multi_study.nf \
+	run qtlmap/main.nf \
 	-profile tartu_hpc \
 	--studyFile ~/cage/qtlmap_prep/sources.tsv \
 	--cis_window 200000 \

@@ -13,7 +13,7 @@ module load nextflow
 
 git clone https://github.com/eQTL-Catalogue/rnaseq
 git clone https://github.com/kerimoff/qcnorm
-git clone https://github.com/kerimoff/qtlmap.git
+git clone https://github.com/eQTL-Catalogue/qtlmap.git
 
 NXF_VER=18.10.1 nextflow \
 	run rnaseq/main.nf \
