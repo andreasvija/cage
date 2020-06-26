@@ -125,22 +125,21 @@ temp = tryCatch({
   names(rangeslists_wide) = spec_wide$tss_id
 
 
-  # TODO: group by txrevise groups
   annot1 = exons_list1[names(exons_list1) %like% paste0(observed_gene, ".grp_1.upstream")]
   annot2 = exons_list2[names(exons_list2) %like% paste0(observed_gene, ".grp_2.upstream")]
-  exons = c(annot1, annot2)
 
 
   filter_start = min(spec$peak_start) - 1000
   filter_end = max(spec$peak_end) + 1000
   region_filter = GRanges(seqnames=2, IRanges(start=filter_start, end=filter_end))
 
-  filtered_exons = lapply(exons, pintersect, region_filter, drop.nohit.ranges=TRUE)
-  filtered_exons = filtered_exons[lapply(filtered_exons, length) > 0]
+  filtered_exons_g1 = lapply(annot1, pintersect, region_filter, drop.nohit.ranges=TRUE)
+  filtered_exons_g1 = filtered_exons_g1[lapply(filtered_exons_g1, length) > 0]
+  filtered_exons_g2 = lapply(annot2, pintersect, region_filter, drop.nohit.ranges=TRUE)
+  filtered_exons_g2 = filtered_exons_g2[lapply(filtered_exons_g2, length) > 0]
 
-
-  all_trs = c(filtered_exons, rangeslists)
-  expanded_trs = c(filtered_exons, rangeslists_wide)
+  wide_prom_and_g1 = c(filtered_exons_g1, rangeslists_wide)
+  prom_and_g2 = c(filtered_exons_g2, rangeslists)
 
 
   genotypes_sub = genotypes %>%
@@ -158,18 +157,17 @@ temp = tryCatch({
     filter(track_id %in% mapping_)
 
 
-  a = plotCoverage(exons=expanded_trs, cdss=all_trs, track_data=sample_data_this_cage, coverage_type="line",
+  a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_cage, coverage_type="line",
                    fill_palette = c("#a1dab4", "#41b6c4", "#225ea8", "#a1dab4", "#41b6c4", "#225ea8"),
-                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=FALSE,
+                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
                    rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
 
-  b = plotCoverage(exons=expanded_trs, cdss=all_trs, track_data=sample_data_this_geuvadis, coverage_type="line",
+  b = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis, coverage_type="line",
                    fill_palette = c("#a1dab4", "#41b6c4", "#225ea8", "#a1dab4", "#41b6c4", "#225ea8"), # TODO half?
-                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=FALSE,
+                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
                    rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
 
-  combo = plot_grid(a, b, ncol=1, nrow=2)
-  #combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3)
+  combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3)
 
   ggsave(paste("plots/", n, observed_gene, ".pdf", sep="_"), combo)
 
