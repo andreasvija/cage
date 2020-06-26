@@ -4,14 +4,17 @@ gene_name
 chr
 peak_start
 peak_end
+peak_score
 strand
+tss_start
+tss_end
 ->
 seqname - chr
 source - fantom5
 feature - promotor
 start - peak_start
 end - peak_end
-score - .
+score - peak_score
 strand - strand
 frame - .
 attribute:
@@ -36,8 +39,8 @@ with open(inputfilename, 'r') as infile:
 			outline += 'promotor' + '\t' # feature - promotor
 			outline += incols[3] + '\t' # start - peak_start
 			outline += incols[4] + '\t' # end - peak_end
-			outline += '+' + '\t' # score - .
-			outline += incols[5] + '\t' # strand - strand
+			outline += incols[5] + '\t' # score - .
+			outline += incols[6] + '\t' # strand - strand
 			outline += '.' + '\t' # frame - .
 
 			outline += 'gene_id' + ' "' + incols[0] + '";' # promotor_id tss_id; // feature

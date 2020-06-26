@@ -163,7 +163,7 @@ write.table(countMatrix, file="countMatrix.tsv", sep="\t", row.names=FALSE, quot
 
 # calculate placeholder phenotype_pos as promotor average position
 
-promoterMetadata = read_tsv("FANTOM5_promoter_annotations.tsv", col_types="ccciic") %>%
+promoterMetadata = read_tsv("FANTOM5_promoter_annotations.tsv", col_types="ccciiicii") %>%
   mutate(phenotype_id=tss_id, group_id=gene_name, gene_id=gene_name, chromosome=chr, 
          promoter_pos=peak_start, strand=if_else(strand == "+", "1", "-1")) %>%
   select(phenotype_id, group_id, gene_id, chromosome, promoter_pos, strand)

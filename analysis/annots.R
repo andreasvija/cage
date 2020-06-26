@@ -38,7 +38,7 @@ txrevise_results = txrevise_results %>%
 shared_genes = intersect(bwa_results$gene, txrevise_results$gene)
 shared_genes = shared_genes
 
-promoter_annots = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciic") %>%
+promoter_annots = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciiicii") %>%
   filter(gene_name %in% shared_genes)
 
 

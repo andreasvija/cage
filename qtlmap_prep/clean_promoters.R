@@ -8,6 +8,7 @@ set.seed(123)
 
 
 
+# https://fantom.gsc.riken.jp/5/datafiles/reprocessed/hg38_latest/extra/CAGE_peaks_annotation/hg38_liftover+new_CAGE_peaks_phase1and2_annot.txt.gz (26.06.2020)
 promoterAnnots = read_tsv("hg38_liftover+new_CAGE_peaks_phase1and2_annot.txt", col_types="ccnccccccc")
 colnames(promoterAnnots) = c("complex", "transcript", "distance", "gene_id", "hgnc_mgi_id",
                              "uniprot_id", "gene_name", "gene_symbol", "gene_synonyms", "gene_source")
@@ -30,49 +31,37 @@ sum(is.na(promoterAnnots$gene_symbol) & !is.na(promoterAnnots$gene_source)) # 0
 # gene_symbol is obviously the identificator with the biggest coverage
 promoterAnnots = promoterAnnots[!is.na(promoterAnnots$gene_symbol),]
 # 99 953 annotations, meaning 110 297 promoters had no gene name
-promoterAnnots = promoterAnnots %>% select(complex, gene_symbol)
+promoterAnnots = promoterAnnots %>%
+  select(complex, gene_symbol) %>%
+  rename(gene_name=gene_symbol)
 
 
 
-# better format
-# tss_id, gene_name, chr(without "chr"), peak_start, peak_end, strand
-# hg19::chr1:564571..564600,+;hg_1.1
-# XXXX::chr[chr]:[peak_start]..[peak_end],[strand];[tss_id] and gene_symbol is gene_name
+# https://fantom.gsc.riken.jp/5/datafiles/reprocessed/hg38_latest/extra/CAGE_peaks/hg38_fair+new_CAGE_peaks_phase1and2.bed.gz (26.06.2020)
+promoterCounts = read_tsv("hg38_fair+new_CAGE_peaks_phase1and2.bed", col_types="cnncncnnc")
+colnames(promoterCounts) = c("chr", "peak_start", "peak_end", "complex",
+                             "peak_score", "strand", "tss_start", "tss_end", "rgb")
 
-fun_tss_id <- function(s) {
-  return(strsplit(s, ";")[[1]][2])
-}
-promoterAnnots$tss_id = sapply(promoterAnnots$complex, FUN=fun_tss_id)
-promoterAnnots$gene_name = promoterAnnots$gene_symbol
+promoterAnnots = promoterAnnots %>%
+  inner_join(promoterCounts, by="complex") %>% # 99 880, meaning 73 annots had no counts in bed file
+  separate(complex, c("old_tss_id", "tss_id"), sep = ";") %>%
+  select(tss_id, gene_name, chr, peak_start, peak_end, peak_score, strand, tss_start, tss_end)
+
 fun_chr <- function(s) {
-  return(strsplit(strsplit(s, "::chr")[[1]][2], ":")[[1]][1])
+  return(strsplit(s, "chr")[[1]][2])
 }
-promoterAnnots$chr = sapply(promoterAnnots$complex, FUN=fun_chr)
+promoterAnnots$chr = sapply(promoterAnnots$chr, FUN=fun_chr)
 
-fun_peak_start <- function(s) {
-  return(strsplit(strsplit(s, "\\.\\.")[[1]][1], "chr[0-9MXY]+:")[[1]][2])
-}
-promoterAnnots$peak_start = sapply(promoterAnnots$complex, FUN=fun_peak_start)
-fun_peak_end <- function(s) {
-  return(strsplit(strsplit(s, "\\.\\.")[[1]][2], ",")[[1]][1])
-}
-promoterAnnots$peak_end = sapply(promoterAnnots$complex, FUN=fun_peak_end)
-sum(promoterAnnots$peak_start > promoterAnnots$peak_end) # 0
 
-fun_strand <- function(s) {
-  return(strsplit(strsplit(s, ",")[[1]][2], ";")[[1]][1])
-}
-promoterAnnots$strand = sapply(promoterAnnots$complex, FUN=fun_strand)
 
-promoterAnnots = promoterAnnots %>% select(-complex, -gene_symbol)
 apply(is.na(promoterAnnots), 2, sum)
 
 # remove genes not on chromosomes 1-22
-promoterAnnots = promoterAnnots[!(promoterAnnots$chr %in% c("X", "Y", "M")),] # 96 631
+promoterAnnots = promoterAnnots[!(promoterAnnots$chr %in% c("X", "Y", "M")),] # 96 562
 
 # split gene names from spaces as different genes
 promoterAnnots$gene_name = sapply(promoterAnnots$gene_name, strsplit, split=" ")
-promoterAnnots = unnest(promoterAnnots, cols=c(gene_name)) # 97 422
+promoterAnnots = unnest(promoterAnnots, cols=c(gene_name)) # 97 320
 
 
 
@@ -108,9 +97,9 @@ geneMapping = geneMapping[!is.na(geneMapping$gene_id),] # 20 481
 
 # make gene column ENSEMBL ID from source, discard row if impossible
 
-joined = inner_join(promoterAnnots, geneMapping, by=c("gene_name")) # 95 023 / 95 042
-fantom_genes = unique(promoterAnnots$gene_name) # 21 564
-overlap_genes = unique(joined$gene_name[!is.na(joined$gene_id)]) # 20 481
+joined = inner_join(promoterAnnots, geneMapping, by=c("gene_name")) # 94 928 / 94 946
+fantom_genes = unique(promoterAnnots$gene_name) # 21 535
+overlap_genes = unique(joined$gene_name[!is.na(joined$gene_id)]) # 20 456 / 20 454
 
 1 - length(overlap_genes)/length(fantom_genes) # 5% gene names not mapped (or not uniquely)
 missing = fantom_genes[!(fantom_genes %in% overlap_genes)] # most LOCXXXXX
@@ -127,7 +116,7 @@ not_dupes = promoterAnnots %>%
   ungroup() %>%
   filter(n==1) %>%
   select(tss_id)
-promoterAnnots = inner_join(promoterAnnots, not_dupes, by="tss_id") # 93 718 / 93 706
+promoterAnnots = inner_join(promoterAnnots, not_dupes, by="tss_id") # 93 663 / 93 651
 
 
 
