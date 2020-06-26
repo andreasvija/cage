@@ -24,7 +24,7 @@ sample_mapping = read_tsv("../qtlmap_prep/sampleMetadata.tsv") %>%
   select(sample_id, genotype_id)
 sample_mapping_ = read_tsv("GEUVADIS_EUR.tsv") %>%
   select(sample_id, genotype_id)
-overlap = intersect(sample_mapping$genotype_id, sample_mapping_$genotype_id) # n=78
+overlap = intersect(sample_mapping$genotype_id, sample_mapping_$genotype_id) # n = 78
 
 
 genotypes = read_tsv("variantinfo.vcf")[c(3,10:163)] %>%
@@ -93,7 +93,6 @@ exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 for (n in c(1: (dim(to_visualize)[1]) )) { # c(1: (dim(to_visualize)[1]) )
 temp = tryCatch({
 
-  print(n)
   observed_gene = to_visualize$gene[n]
   observed_variant = to_visualize$top_variant[n]
 
@@ -126,6 +125,7 @@ temp = tryCatch({
   names(rangeslists_wide) = spec_wide$tss_id
 
 
+  # TODO: group by txrevise groups
   annot1 = exons_list1[names(exons_list1) %like% paste0(observed_gene, ".grp_1.upstream")]
   annot2 = exons_list2[names(exons_list2) %like% paste0(observed_gene, ".grp_2.upstream")]
   exons = c(annot1, annot2)
@@ -158,17 +158,18 @@ temp = tryCatch({
     filter(track_id %in% mapping_)
 
 
-  a = plotCoverage(exons=expanded_trs, cdss=all_trs, track_data=sample_data_this_cage, #transcript_annotations=annots,
+  a = plotCoverage(exons=expanded_trs, cdss=all_trs, track_data=sample_data_this_cage, coverage_type="line",
                    fill_palette = c("#a1dab4", "#41b6c4", "#225ea8", "#a1dab4", "#41b6c4", "#225ea8"),
                    transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=FALSE,
-                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.5, 0.5))
+                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
 
-  b = plotCoverage(exons=expanded_trs, cdss=all_trs, track_data=sample_data_this_geuvadis, #transcript_annotations=annots_,
-                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8", "#a1dab4", "#41b6c4", "#225ea8"),
+  b = plotCoverage(exons=expanded_trs, cdss=all_trs, track_data=sample_data_this_geuvadis, coverage_type="line",
+                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8", "#a1dab4", "#41b6c4", "#225ea8"), # TODO half?
                    transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=FALSE,
-                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.5, 0.5))
+                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
 
   combo = plot_grid(a, b, ncol=1, nrow=2)
+  #combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3)
 
   ggsave(paste("plots/", n, observed_gene, ".pdf", sep="_"), combo)
 
