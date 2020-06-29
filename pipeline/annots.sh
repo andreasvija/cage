@@ -43,10 +43,11 @@ nextflow \
 	--outdir new_annots
 
 ~/cage/nextflow/nextflow \
-	run ~/cage/pipeline/qtlmap/main_multi_study.nf \
+	run qtlmap/main.nf \
 	-profile tartu_hpc \
-	--studyFile ~/cage/analysis/sources_annots.tsv \
+	--studyFile sources_annots.tsv \
 	--cis_window 200000 \
 	--run_permutation true \
 	--is_imputed FALSE \
+	--varid_rsid_map_file /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/dbSNP_b151_GRCh38p7_splitted_var_rsid.vcf.gz \
 	-resume

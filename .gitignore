@@ -3,6 +3,7 @@ align/temps/
 align/SlurmOut/
 align/.snakemake/
 align/out.txt
+align/out_bigwig.txt
 align/progress.txt
 
 qtlmap_prep/countMatrix.tsv
@@ -11,6 +12,8 @@ pipeline/*
 !pipeline/reset.sh
 !pipeline/cage.sh
 !pipeline/annots.sh
+!pipeline/sources_cage.tsv
+!pipeline/sources_annots.tsv
 
 analysis/plots/
 analysis/geuvadis_counts.txt
