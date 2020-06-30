@@ -34,7 +34,7 @@ nextflow \
 	-profile tartu_hpc \
 	-resume \
 	--study_name new_annots \
-	--quant_results_path ~/cage/pipeline/results \
+	--quant_results_path ../pipeline/results \
 	--sample_meta_path /gpfs/hpc/projects/eQTLCatalogue/SampleArcheology/studies/cleaned/GEUVADIS_EUR.tsv \
 	--txrev_pheno_meta_path /gpfs/hpc/projects/genomic_references/annotations/txrevise/Homo_sapiens.GRCh38.96_CAGE_25bp/txrevise_Ensembl_96_CAGE_25bp_phenotype_metadata.tsv.gz \
 	--skip_exon_norm \
@@ -42,7 +42,7 @@ nextflow \
 	--skip_leafcutter_norm \
 	--outdir new_annots
 
-~/cage/nextflow/nextflow \
+../nextflow/nextflow \
 	run qtlmap/main.nf \
 	-profile tartu_hpc \
 	--studyFile sources_annots.tsv \

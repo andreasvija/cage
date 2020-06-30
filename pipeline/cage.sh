@@ -13,7 +13,7 @@ module load nextflow
 
 git clone https://github.com/eQTL-Catalogue/qtlmap.git
 
-~/cage/nextflow/nextflow \
+../nextflow/nextflow \
 	run qtlmap/main.nf \
 	-profile tartu_hpc \
 	--studyFile sources_cage.tsv \
