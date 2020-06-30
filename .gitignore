@@ -16,7 +16,6 @@ pipeline/*
 !pipeline/sources_annots.tsv
 
 analysis/plots/
-analysis/geuvadis_counts.txt
 analysis/txrevise_Ensembl_96_CAGE_10bp_phenotype_metadata_filtered.tsv
 *.gff3
 
