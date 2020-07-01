@@ -24,3 +24,5 @@ git clone https://github.com/eQTL-Catalogue/qtlmap.git
 	--run_permutation true \
 	--varid_rsid_map_file /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/dbSNP_b151_GRCh38p7_splitted_var_rsid.vcf.gz \
 	-resume
+
+# cp something bwa.permuted.txt
