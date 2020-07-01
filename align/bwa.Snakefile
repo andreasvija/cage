@@ -34,7 +34,7 @@ rule align_reads:
 		cp {input.inputfile} {params.tempfq}
 
 		bwa aln -t {threads} {params.index} {params.tempfq} > {params.tempsai}
-		bwa samse -r '{params.rg}' {params.index} {params.tempsai} {params.tempfq} | samtools view -b - > {params.tempbam}
+		bwa samse -r '{params.rg}' {params.index} {params.tempsai} {params.tempfq} | samtools view -b -q 1 > {params.tempbam}
 
 		cp {params.tempbam} {output.outputfile}
 
