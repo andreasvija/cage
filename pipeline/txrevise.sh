@@ -11,6 +11,9 @@ module load java-1.8.0_40
 module load singularity
 module load nextflow
 
+mkdir txrevise
+cd txrevise
+
 git clone https://github.com/eQTL-Catalogue/rnaseq
 git clone https://github.com/kerimoff/qcnorm
 git clone https://github.com/eQTL-Catalogue/qtlmap.git
@@ -34,7 +37,7 @@ nextflow \
 	-profile tartu_hpc \
 	-resume \
 	--study_name new_annots \
-	--quant_results_path ../pipeline/results \
+	--quant_results_path results \
 	--sample_meta_path /gpfs/hpc/projects/eQTLCatalogue/SampleArcheology/studies/cleaned/GEUVADIS_EUR.tsv \
 	--txrev_pheno_meta_path /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/phenotype_metadata/txrevise_Ensembl_96_phenotype_metadata.tsv.gz \
 	--skip_exon_norm \
@@ -42,10 +45,10 @@ nextflow \
 	--skip_leafcutter_norm \
 	--outdir new_annots
 
-../nextflow/nextflow \
+../../nextflow/nextflow \
 	run qtlmap/main.nf \
 	-profile tartu_hpc \
-	--studyFile sources_annots.tsv \
+	--studyFile ../sources_annots.tsv \
 	--cis_window 200000 \
 	--run_permutation true \
 	--is_imputed FALSE \

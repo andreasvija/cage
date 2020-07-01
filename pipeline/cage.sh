@@ -11,12 +11,15 @@ module load java-1.8.0_40
 module load singularity
 module load nextflow
 
+mkdir cage
+cd cage
+
 git clone https://github.com/eQTL-Catalogue/qtlmap.git
 
-../nextflow/nextflow \
+../../nextflow/nextflow \
 	run qtlmap/main.nf \
 	-profile tartu_hpc \
-	--studyFile sources_cage.tsv \
+	--studyFile ../sources_cage.tsv \
 	--cis_window 200000 \
 	--run_permutation true \
 	--varid_rsid_map_file /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/dbSNP_b151_GRCh38p7_splitted_var_rsid.vcf.gz \
