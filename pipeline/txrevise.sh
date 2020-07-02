@@ -15,7 +15,7 @@ mkdir txrevise
 cd txrevise
 
 git clone https://github.com/eQTL-Catalogue/rnaseq
-git clone https://github.com/kerimoff/qcnorm
+git clone https://github.com/eQTL-Catalogue/qcnorm
 git clone https://github.com/eQTL-Catalogue/qtlmap.git
 
 NXF_VER=18.10.1 nextflow \
@@ -55,4 +55,4 @@ nextflow \
 	--varid_rsid_map_file /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/dbSNP_b151_GRCh38p7_splitted_var_rsid.vcf.gz \
 	-resume
 
-	# cp something txrev.permuted.txt
+# cp something txrev.permuted.txt
