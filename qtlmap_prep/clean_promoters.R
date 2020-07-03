@@ -30,7 +30,7 @@ sum(is.na(promoterAnnots$gene_symbol) & !is.na(promoterAnnots$gene_source)) # 0
 
 # gene_symbol is obviously the identificator with the biggest coverage
 promoterAnnots = promoterAnnots[!is.na(promoterAnnots$gene_symbol),]
-# 99 953 annotations, meaning 110 297 promoters had no gene name
+# 99 953 annotations, over 22 591 genes meaning 110 297 promoters had no gene name
 promoterAnnots = promoterAnnots %>%
   select(complex, gene_symbol) %>%
   rename(gene_name=gene_symbol)
@@ -57,7 +57,7 @@ promoterAnnots$chr = sapply(promoterAnnots$chr, FUN=fun_chr)
 apply(is.na(promoterAnnots), 2, sum)
 
 # remove genes not on chromosomes 1-22
-promoterAnnots = promoterAnnots[!(promoterAnnots$chr %in% c("X", "Y", "M")),] # 96 562
+promoterAnnots = promoterAnnots[!(promoterAnnots$chr %in% c("X", "Y", "M")),] # 96 562 over 21 696
 
 # split gene names from spaces as different genes
 promoterAnnots$gene_name = sapply(promoterAnnots$gene_name, strsplit, split=" ")
@@ -116,7 +116,7 @@ not_dupes = promoterAnnots %>%
   ungroup() %>%
   filter(n==1) %>%
   select(tss_id)
-promoterAnnots = inner_join(promoterAnnots, not_dupes, by="tss_id") # 93 663 / 93 651
+promoterAnnots = inner_join(promoterAnnots, not_dupes, by="tss_id") # 93 663 over 20 201 / 93 651
 
 
 

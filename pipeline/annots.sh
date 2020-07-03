@@ -36,14 +36,14 @@ nextflow \
 	run qcnorm/normalisation.nf \
 	-profile tartu_hpc \
 	-resume \
-	--study_name new_annots \
+	--study_name txrevise_annots \
 	--quant_results_path results \
 	--sample_meta_path /gpfs/hpc/projects/eQTLCatalogue/SampleArcheology/studies/cleaned/GEUVADIS_EUR.tsv \
 	--txrev_pheno_meta_path /gpfs/hpc/projects/genomic_references/annotations/txrevise/Homo_sapiens.GRCh38.96_CAGE_25bp/txrevise_Ensembl_96_CAGE_25bp_phenotype_metadata.tsv.gz \
 	--skip_exon_norm \
 	--skip_tx_norm \
 	--skip_leafcutter_norm \
-	--outdir new_annots
+	--outdir qcnorm_out
 
 ../../nextflow/nextflow \
 	run qtlmap/main.nf \
@@ -55,4 +55,4 @@ nextflow \
 	--varid_rsid_map_file /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/dbSNP_b151_GRCh38p7_splitted_var_rsid.vcf.gz \
 	-resume
 
-# cp something txrev_annots_25.permuted.txt
+gunzip results/sumstats/txrevise_annots.permuted.txt.gz -c > ../../analysis/txrev_annots_25.permuted.txt

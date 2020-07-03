@@ -36,23 +36,23 @@ nextflow \
 	run qcnorm/normalisation.nf \
 	-profile tartu_hpc \
 	-resume \
-	--study_name new_annots \
+	--study_name txrevise \
 	--quant_results_path results \
 	--sample_meta_path /gpfs/hpc/projects/eQTLCatalogue/SampleArcheology/studies/cleaned/GEUVADIS_EUR.tsv \
 	--txrev_pheno_meta_path /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/phenotype_metadata/txrevise_Ensembl_96_phenotype_metadata.tsv.gz \
 	--skip_exon_norm \
 	--skip_tx_norm \
 	--skip_leafcutter_norm \
-	--outdir new_annots
+	--outdir qcnorm_out
 
 ../../nextflow/nextflow \
 	run qtlmap/main.nf \
 	-profile tartu_hpc \
-	--studyFile ../sources_annots.tsv \
+	--studyFile ../sources_txrevise.tsv \
 	--cis_window 200000 \
 	--run_permutation true \
 	--is_imputed FALSE \
 	--varid_rsid_map_file /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/dbSNP_b151_GRCh38p7_splitted_var_rsid.vcf.gz \
 	-resume
 
-# cp something txrev.permuted.txt
+gunzip results/sumstats/txrevise.permuted.txt.gz -c > ../../analysis/txrev.permuted.txt
