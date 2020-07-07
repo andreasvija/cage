@@ -57,7 +57,7 @@ promoterAnnots$chr = sapply(promoterAnnots$chr, FUN=fun_chr)
 apply(is.na(promoterAnnots), 2, sum)
 
 # remove genes not on chromosomes 1-22
-promoterAnnots = promoterAnnots[!(promoterAnnots$chr %in% c("X", "Y", "M")),] # 96 562 over 21 696
+promoterAnnots = promoterAnnots[promoterAnnots$chr %in% as.character(1:22),] # 96 562 over 21 696
 
 # split gene names from spaces as different genes
 promoterAnnots$gene_name = sapply(promoterAnnots$gene_name, strsplit, split=" ")
@@ -117,6 +117,12 @@ not_dupes = promoterAnnots %>%
   filter(n==1) %>%
   select(tss_id)
 promoterAnnots = inner_join(promoterAnnots, not_dupes, by="tss_id") # 93 663 over 20 201 / 93 651
+
+# remove promotors whose genes have promotors on multiple chromosomes
+
+combinations = unique(promoterAnnots[c("gene_id", "chr")])
+multi_chr_genes = names(table(combinations$gene_id)[table(combinations$gene_id) > 1])
+promoterAnnots = promoterAnnots[!(promoterAnnots$gene_id %in% multi_chr_genes),] # 93 554 over 20 193
 
 
 

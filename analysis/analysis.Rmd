@@ -31,58 +31,29 @@ library("tidyr")
 set.seed(123)
 ```
 
-# BWA
+# Load in
 
 ```{r}
-col_names = c("gene", "chr", "phenotype_start", "phenotype_end", "strand", "top_phenotype", "total_phenotypes", "variants_tested", "variant_distance", "top_variant", "top_variant_chr", "top_variant_start", "top_variant_end", "df", "dummy", "beta_1", "beta_2", "p_nominal", "slope", "p_adjusted", "p_adjusted_beta")
-col_types = "cciicciiicciiiddddddd"
+#col_names = c("gene", "chr", "phenotype_start", "phenotype_end", "strand", "top_phenotype", "total_phenotypes", "variants_tested", "variant_distance", "top_variant", "top_variant_chr", "top_variant_start", "top_variant_end", "df", "dummy", "beta_1", "beta_2", "p_nominal", "slope", "p_adjusted", "p_adjusted_beta")
+#col_types = "cciicciiicciiiddddddd"
+col_names = c("gene", "top_phenotype", "total_phenotypes", "variants_tested", "top_variant", "top_variant_chr", "top_variant_start", "p_nominal", "beta", "p_adjusted", "p_adjusted_beta")
+col_types = "cciiccidddd"
 
-bwa_results = read_delim("bwa.permuted.txt", delim=" ", col_types=col_types, col_names=col_names)
-bwa_results$p_adjusted_beta_adjusted = p.adjust(bwa_results$p_adjusted_beta, method="fdr")
-```
+bwa_results = read_delim("bwa.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+txrevise_results = read_delim("txrev.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+annots_results = read_delim("txrev_annots_25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 
-```{r}
-ggplot(mapping=aes(x=bwa_results$p_adjusted_beta_adjusted)) +
-  geom_histogram()
-sum(bwa_results$p_adjusted_beta_adjusted < 0.05)
-
-ggplot(mapping=aes(x=abs(bwa_results$variant_distance[bwa_results$p_adjusted_beta_adjusted < 0.05]))) +
-  geom_histogram()
-```
-
-```{r}
-bwa_tops = bwa_results %>%
-  filter(p_adjusted_beta_adjusted < 0.05) %>%
-  arrange(p_adjusted_beta_adjusted)
-```
-
-# txrevise
-
-```{r}
-txrevise_results = read_delim("txrev.permuted.txt", delim=" ", col_types=col_types, col_names=col_names)
-txrevise_results$p_adjusted_beta_adjusted = p.adjust(txrevise_results$p_adjusted_beta, method="fdr")
-
+bwa_results = bwa_results %>%
+  mutate(kind="upstream") # for homogeneity's sake
 fun = function(x, n=1) {
   return(strsplit(x, ".", fixed=TRUE)[[1]][n])
 }
 txrevise_results = txrevise_results %>%
   mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
   filter(kind=="upstream")
-```
-
-```{r}
-ggplot(mapping=aes(x=txrevise_results$p_adjusted_beta_adjusted)) +
-  geom_histogram()
-sum(txrevise_results$p_adjusted_beta_adjusted < 0.05)
-
-ggplot(mapping=aes(x=abs(txrevise_results$variant_distance[txrevise_results$p_adjusted_beta_adjusted < 0.05]))) +
-  geom_histogram()
-```
-
-```{r}
-tx_tops = txrevise_results %>%
-  filter(p_adjusted_beta_adjusted < 0.05) %>%
-  arrange(p_adjusted_beta_adjusted)
+annots_results = annots_results %>%
+  mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
+  filter(kind=="upstream")
 ```
 
 ```{r}
@@ -93,51 +64,82 @@ genes2 = AnnotationDbi::select(upstream2, keys=keys(upstream2, "GENEID"), keytyp
 genes1 = unlist(genes1, use.names=FALSE)
 genes2 = unlist(genes2, use.names=FALSE)
 
-genes = unique(c(sapply(genes1, fun), sapply(genes2, fun)))
-
-old_genes = unlist(txrevise_results$gene, use.names=FALSE)
-new_genes = setdiff(genes, old_genes)
-additional = data_frame(gene=new_genes, chr="_", phenotype_start=1, phenotype_end=1, strand="_", top_phenotype="_",
-                        total_phenotypes=1, variants_tested=1, variant_distance=1, top_variant="_", top_variant_chr="_",
-                        top_variant_start=1, top_variant_end=1, df=1, dummy=1, beta_1=1, beta_2=1, p_nominal=0.99,
-                        slope=1, p_adjusted=0.99, p_adjusted_beta=0.99, p_adjusted_beta_adjusted=0.99, kind="upstream")
-txrevise_results = rbind(txrevise_results, additional)
+genes = union(sapply(genes1, fun), sapply(genes2, fun))
 ```
 
-# With annots
+```{r}
+common_genes = intersect(bwa_results$gene, genes)
+
+bwa_results_common = bwa_results[bwa_results$gene %in% common_genes,]
+txrevise_results_common = txrevise_results[txrevise_results$gene %in% common_genes,]
+annots_results_common = annots_results[annots_results$gene %in% common_genes,]
+```
 
 ```{r}
-annots_results = read_delim("txrev_annots_25.permuted.txt", delim=" ", col_types=col_types, col_names=col_names)
+bwa_results_common$p_adjusted_beta_adjusted = p.adjust(bwa_results_common$p_adjusted_beta, method="fdr")
+txrevise_results_common$p_adjusted_beta_adjusted = p.adjust(txrevise_results_common$p_adjusted_beta, method="fdr")
+annots_results_common$p_adjusted_beta_adjusted = p.adjust(annots_results_common$p_adjusted_beta, method="fdr")
+
+# just to keep a consistent shape
+bwa_results$p_adjusted_beta_adjusted = p.adjust(bwa_results$p_adjusted_beta, method="fdr")
+txrevise_results$p_adjusted_beta_adjusted = p.adjust(txrevise_results$p_adjusted_beta, method="fdr")
 annots_results$p_adjusted_beta_adjusted = p.adjust(annots_results$p_adjusted_beta, method="fdr")
-
-annots_results = annots_results %>%
-  mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
-  filter(kind=="upstream")
 ```
 
 ```{r}
+fill_genes <- function(x, common=FALSE) {
+  gene_source = genes
+  if (common) {
+    gene_source = common_genes
+  }
+  old_genes = unlist(x$gene, use.names=FALSE)
+  new_genes = setdiff(gene_source, old_genes)
+  
+  #additional = data_frame(gene=new_genes, chr="_", phenotype_start=1, phenotype_end=1, strand="_", top_phenotype="_",
+  #                        total_phenotypes=1, variants_tested=1, variant_distance=1, top_variant="_", top_variant_chr="_",
+  #                        top_variant_start=1, top_variant_end=1, df=1, dummy=1, beta_1=1, beta_2=1, p_nominal=0.99,
+  #                        slope=1, p_adjusted=0.99, p_adjusted_beta=0.99, p_adjusted_beta_adjusted=0.99, kind="upstream")
+  additional = data_frame(gene=new_genes, top_phenotype="_", total_phenotypes=1, variants_tested=1, top_variant="_", 
+                          top_variant_chr="_", top_variant_start=1, p_nominal=0.99, beta=1, p_adjusted=0.99, 
+                          p_adjusted_beta=0.99, p_adjusted_beta_adjusted=0.99, kind="upstream")
+  return(rbind(x, additional))
+}
+
+txrevise_results_ = fill_genes(txrevise_results)
+txrevise_results_common_ = fill_genes(txrevise_results_common, common=TRUE)
+annots_results_ = fill_genes(annots_results)
+annots_results_common_ = fill_genes(annots_results_common, common=TRUE)
+```
+
+```{r}
+ggplot(mapping=aes(x=bwa_results$p_adjusted_beta_adjusted)) +
+  geom_histogram()
+sum(bwa_results$p_adjusted_beta_adjusted < 0.05)
+
+ggplot(mapping=aes(x=txrevise_results$p_adjusted_beta_adjusted)) +
+  geom_histogram()
+sum(txrevise_results$p_adjusted_beta_adjusted < 0.05)
+
 ggplot(mapping=aes(x=annots_results$p_adjusted_beta_adjusted)) +
   geom_histogram()
 sum(annots_results$p_adjusted_beta_adjusted < 0.05)
 
-ggplot(mapping=aes(x=abs(annots_results$variant_distance[annots_results$p_adjusted_beta_adjusted < 0.05]))) +
-  geom_histogram()
+#ggplot(mapping=aes(x=abs(bwa_results$variant_distance[bwa_results$p_adjusted_beta_adjusted < 0.05]))) +
+#  geom_histogram()
 ```
 
 ```{r}
-ann_tops = annots_results %>%
+bwa_tops = bwa_results_common %>%
   filter(p_adjusted_beta_adjusted < 0.05) %>%
   arrange(p_adjusted_beta_adjusted)
-```
 
-```{r}
-old_genes = unlist(annots_results$gene, use.names=FALSE)
-new_genes = setdiff(genes, old_genes)
-additional = data_frame(gene=new_genes, chr="_", phenotype_start=1, phenotype_end=1, strand="_", top_phenotype="_",
-                        total_phenotypes=1, variants_tested=1, variant_distance=1, top_variant="_", top_variant_chr="_",
-                        top_variant_start=1, top_variant_end=1, df=1, dummy=1, beta_1=1, beta_2=1, p_nominal=0.99,
-                        slope=1, p_adjusted=0.99, p_adjusted_beta=0.99, p_adjusted_beta_adjusted=0.99, kind="upstream")
-annots_results = rbind(annots_results, additional)
+tx_tops = txrevise_results_common %>%
+  filter(p_adjusted_beta_adjusted < 0.05) %>%
+  arrange(p_adjusted_beta_adjusted)
+
+ann_tops = annots_results_common %>%
+  filter(p_adjusted_beta_adjusted < 0.05) %>%
+  arrange(p_adjusted_beta_adjusted)
 ```
 
 # Analysis
