@@ -30,7 +30,6 @@ exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 
 
 #for every gene shared by cage and txrevise
-# TODO: this excludes 1-transcript genes from txrevise's side
 
 all_new_transcripts = list()
 new_transcript_genes = c()

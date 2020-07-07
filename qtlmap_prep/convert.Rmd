@@ -235,6 +235,6 @@ fun = function(x, n=1) {
 }
 genes = union(sapply(genes1, fun), sapply(genes2, fun))
 common_genes = intersect(bwa_kept_genes, genes)
-saveRDS(common_genes, "common_genes.rds")
+saveRDS(common_genes, "../analysis/common_genes.rds")
 ```
 
