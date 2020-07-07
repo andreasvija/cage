@@ -18,29 +18,10 @@ PROMOTER_BUFFER_RANGE = 25
 EXON_START_BUFFER_RANGE = 25
 EXON_BACK_RANGE = 100
 
-
-col_names = c("gene", "chr", "phenotype_start", "phenotype_end", "strand", "top_phenotype", "total_phenotypes",
-              "variants_tested", "variant_distance", "top_variant", "top_variant_chr", "top_variant_start",
-              "top_variant_end", "df", "dummy", "beta_1", "beta_2", "p_nominal", "slope", "p_adjusted", "p_adjusted_beta")
-col_types = "cciicciiicciiiddddddd"
-
-bwa_results = read_delim("bwa.permuted.txt", delim=" ", col_types=col_types, col_names=col_names)
-
-txrevise_results = read_delim("txrev.permuted.txt", delim=" ", col_types=col_types, col_names=col_names)
-fun = function(x, n) {
-  return(strsplit(x, ".", fixed=TRUE)[[1]][n])
-}
-txrevise_results = txrevise_results %>%
-  mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
-  filter(kind=="upstream")
-
-
-shared_genes = intersect(bwa_results$gene, txrevise_results$gene)
-shared_genes = shared_genes
+shared_genes = readRDS("common_genes.rds")
 
 promoter_annots = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciiicii") %>%
   filter(gene_name %in% shared_genes)
-
 
 upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise.grp_1.upstream.gff3")
 upstream2 = GenomicFeatures::makeTxDbFromGFF("txrevise.grp_2.upstream.gff3")
@@ -48,7 +29,8 @@ exons_list1 = GenomicFeatures::exonsBy(upstream1, by = "tx", use.names = TRUE)
 exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 
 
-#for every gene shared by cage and txrevise (N = 9 084)
+#for every gene shared by cage and txrevise
+# TODO: this excludes 1-transcript genes from txrevise's side
 
 all_new_transcripts = list()
 new_transcript_genes = c()
@@ -57,7 +39,7 @@ start_time = Sys.time()
 for (gene in shared_genes) { # c("ENSG00000151694")
   gene_new_transcripts = list()
 
-  #for every promoter belonging to the gene (N = 53 364)
+  #for every promoter belonging to the gene
 
   promoters = promoter_annots %>%
     filter(gene_name == gene)
@@ -79,7 +61,7 @@ for (gene in shared_genes) { # c("ENSG00000151694")
     intersections = lapply(utilized_promoters, pintersect, extended_promoter, drop.nohit.ranges=TRUE)
     if (sum(unlist(lapply(intersections, length))) != 0) {next}
 
-    #for every exon in transcripts (N = 109 847)
+    #for every exon in transcripts
 
     annot1 = exons_list1[names(exons_list1) %like% paste0(gene, ".grp_1.upstream")]
     annot2 = exons_list2[names(exons_list2) %like% paste0(gene, ".grp_2.upstream")]
@@ -223,8 +205,11 @@ for (gene in shared_genes) { # c("ENSG00000151694")
 }
 
 Sys.time() - start_time
+print("Created")
 length(all_new_transcripts)
+print("transcripts over")
 length(unique(new_transcript_genes))
+print("genes")
 
 all_new_transcripts = GRangesList(all_new_transcripts)
 saveRDS(all_new_transcripts, "new_transcripts_25.rds")

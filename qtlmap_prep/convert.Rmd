@@ -19,6 +19,7 @@ setwd("~/cage/qtlmap_prep")
 ```
 
 ```{r}
+library("GenomicFeatures")
 library("dplyr")
 library("ggplot2")
 library("readr")
@@ -107,8 +108,9 @@ ggplot(data=geneCounts, aes(x=geneCount+1e-1)) +
 ```{r}
 # filter out non-detected genes
 lower_threshold = 0
-commonGenes = (filter(geneCounts, geneCount > lower_threshold))$gene # 946 / 20 201 are zeroes (4.7%)
-data = filter(data, gene %in% commonGenes) # 245 476 / 14 424 102 samples removed (1.7%)
+commonGenes = (filter(geneCounts, geneCount > lower_threshold))$gene # 946 / 20 193 are zeroes (4.7%)
+data = filter(data, gene %in% commonGenes) # 245 476 / 14 407 316 samples removed (1.7%)
+bwa_kept_genes = unique(data$gene)
 
 #calculate promoter proportions
 data = inner_join(geneCountsInPerson, data, by=c("gene", "sample"))
@@ -208,7 +210,7 @@ write.table(promoterMetadata, file="phenotypeMetadata.tsv", sep="\t", row.names=
 
 
 ```{r}
-#convert sample metadata into pipeline format (sample_id, genotype_id, qtl_group)
+# convert sample metadata into pipeline format (sample_id, genotype_id, qtl_group)
 
 sampleMetadata = read_tsv("Garieri_sample_metadata.txt") %>%
   mutate(qtl_group="LCL") %>%
@@ -216,3 +218,23 @@ sampleMetadata = read_tsv("Garieri_sample_metadata.txt") %>%
 
 write.table(sampleMetadata, file="sampleMetadata.tsv", sep="\t", row.names=FALSE, quote=FALSE)
 ```
+
+
+```{r}
+# create a list of shared genes
+
+upstream1 = GenomicFeatures::makeTxDbFromGFF("../analysis/txrevise.grp_1.upstream.gff3")
+upstream2 = GenomicFeatures::makeTxDbFromGFF("../analysis/txrevise.grp_2.upstream.gff3")
+genes1 = AnnotationDbi::select(upstream1, keys=keys(upstream1, "GENEID"), keytype="GENEID", columns="GENEID")
+genes2 = AnnotationDbi::select(upstream2, keys=keys(upstream2, "GENEID"), keytype="GENEID", columns="GENEID")
+genes1 = unlist(genes1, use.names=FALSE)
+genes2 = unlist(genes2, use.names=FALSE)
+
+fun = function(x, n=1) {
+  return(strsplit(x, ".", fixed=TRUE)[[1]][n])
+}
+genes = union(sapply(genes1, fun), sapply(genes2, fun))
+common_genes = intersect(bwa_kept_genes, genes)
+saveRDS(common_genes, "common_genes.rds")
+```
+

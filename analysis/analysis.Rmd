@@ -69,6 +69,7 @@ genes = union(sapply(genes1, fun), sapply(genes2, fun))
 
 ```{r}
 common_genes = intersect(bwa_results$gene, genes)
+saveRDS(common_genes, "common_genes.rds")
 
 bwa_results_common = bwa_results[bwa_results$gene %in% common_genes,]
 txrevise_results_common = txrevise_results[txrevise_results$gene %in% common_genes,]
