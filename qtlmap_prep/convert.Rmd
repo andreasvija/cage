@@ -108,7 +108,7 @@ ggplot(data=geneCounts, aes(x=geneCount+1e-1)) +
 ```{r}
 # filter out non-detected genes
 lower_threshold = 0
-commonGenes = (filter(geneCounts, geneCount > lower_threshold))$gene # 946 / 20 193 are zeroes (4.7%)
+commonGenes = (filter(geneCounts, geneCount > lower_threshold))$gene # 946 / 20 193 are zeroes (4.7%) (1594 promotors)
 data = filter(data, gene %in% commonGenes) # 245 476 / 14 407 316 samples removed (1.7%)
 bwa_kept_genes = unique(data$gene)
 
