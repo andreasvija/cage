@@ -106,10 +106,10 @@ fill_genes <- function(x, common=FALSE) {
   return(rbind(x, additional))
 }
 
-txrevise_results_ = fill_genes(txrevise_results)
-txrevise_results_common_ = fill_genes(txrevise_results_common, common=TRUE)
-annots_results_ = fill_genes(annots_results)
-annots_results_common_ = fill_genes(annots_results_common, common=TRUE)
+txrevise_results = fill_genes(txrevise_results)
+txrevise_results_common = fill_genes(txrevise_results_common, common=TRUE)
+annots_results = fill_genes(annots_results)
+annots_results_common = fill_genes(annots_results_common, common=TRUE)
 ```
 
 ```{r}
@@ -169,22 +169,21 @@ length(added) # annotations added: [10] 426 [25] 320
 length(intersect(bwa_tops$gene, tx_tops$gene)) # common both tops: 328
 length(intersect(bwa_tops$gene, ann_tops$gene)) # common after tops: [10] 376 (+48) [25] 342 (+14)
 
-bwa_common_tops = bwa_tops[bwa_tops$gene %in% txrevise_results$gene,]
-tx_common_tops = tx_tops[tx_tops$gene %in% bwa_results$gene,]
-
 length(intersect(bwa_tops$top_variant, tx_tops$top_variant)) # 44
 length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # [10] 59 [25] 47
 ```
 
 
 ```{r}
-# TODO: all top variants, one per line, to variants.txt
+top_variants = rbind(bwa_tops[c("top_variant")], tx_tops[c("top_variant")]) %>%
+  unique()
+write_delim(top_variants, "variants.txt")
 
-to_visualize = bwa_common_tops[! bwa_common_tops$gene %in% tx_common_tops$gene,] %>% #896
+to_visualize = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% #896
   select(gene, top_variant)
 write_tsv(to_visualize, "bwa_better.tsv")
 
-to_visualize = tx_common_tops[! tx_common_tops$gene %in% bwa_common_tops$gene,] %>% #828
+to_visualize = tx_tops[! tx_tops$gene %in% bwa_tops$gene,] %>% #828
   select(gene, top_variant)
 write_tsv(to_visualize, "tx_better.tsv")
 ```
