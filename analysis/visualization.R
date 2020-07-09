@@ -1,3 +1,4 @@
+# requires created plots folder
 wd = "~/cage/analysis/"
 setwd(wd)
 
