@@ -17,6 +17,7 @@ pipeline/*
 !pipeline/sources_txrevise.tsv
 !pipeline/sources_annots.tsv
 
+analysis/txrevise/
 analysis/plots/
 *.gff3
 

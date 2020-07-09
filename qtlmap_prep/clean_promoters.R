@@ -1,7 +1,6 @@
 library("dplyr")
 library("readr")
 library("tidyr")
-library("gprofiler2")
 
 setwd("~/cage/qtlmap_prep")
 set.seed(123)
@@ -86,6 +85,8 @@ geneMapping = geneMapping[geneMapping$gene_name %in% uniqueGeneNames,] # 56 835
 
 # mapping version 2 - gprofiler2 (not used - as good as from file, but more of a black box)
 '
+library("gprofiler2")
+
 geneMapping = unique(promoterAnnots$gene_name) %>%
   gconvert(mthreshold=1, filter_na=FALSE) %>%
   mutate(gene_name=input, gene_id=target) %>%

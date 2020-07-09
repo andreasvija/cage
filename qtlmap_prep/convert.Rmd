@@ -192,7 +192,7 @@ promoterMetadata = promoterMetadata %>%
   inner_join(geneAvgs, by='gene_id') %>%
   select(phenotype_id, group_id, gene_id, chromosome, phenotype_pos, strand)
 
-# replace phenotype pos with the gene's location where possible
+# replace phenotype pos with the gene's location
 
 promoterMeta = read_tsv("transcript_usage_Ensembl_96_phenotype_metadata.tsv", col_types="ccccciicccci") %>%
   select(gene_id, phenotype_pos) %>%
@@ -201,7 +201,7 @@ promoterMeta = read_tsv("transcript_usage_Ensembl_96_phenotype_metadata.tsv", co
   select(gene_id, gene_pos)
 
 promoterMetadata = promoterMetadata %>% left_join(promoterMeta, by='gene_id')
-promoterMetadata$phenotype_pos[!(is.na(promoterMetadata$gene_pos))] = promoterMetadata$gene_pos[!(is.na(promoterMetadata$gene_pos))]
+promoterMetadata$phenotype_pos = promoterMetadata$gene_pos
 
 promoterMetadata = promoterMetadata %>%
   select(phenotype_id, group_id, gene_id, chromosome, phenotype_pos, strand)
