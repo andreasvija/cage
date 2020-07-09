@@ -175,7 +175,7 @@ length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # [10] 59 [25] 47
 
 
 ```{r}
-top_variants = rbind(bwa_tops[c("top_variant")], tx_tops[c("top_variant")]) %>%
+top_variants = rbind(bwa_tops[c("top_variant")], tx_tops[c("top_variant")], ann_tops[c("top_variant")]) %>%
   unique()
 write_delim(top_variants, "variants.txt")
 

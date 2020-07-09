@@ -3,8 +3,8 @@
 #SBATCH -p main
 #SBATCH -J get_variant_info
 #SBATCH -t 24:00:00
-#SBATCH -c 4
-#SBATCH --mem=8G
+#SBATCH -c 8
+#SBATCH --mem=32G
 
 gunzip -c /gpfs/hpc/projects/GENCORD/Garieri_2017/Garieri_filtered.no_DS.vcf.gz > temp.vcf
 gunzip -c /gpfs/hpc/projects/genomic_references/GEUVADIS/genotypes/GEUVADIS_GRCh38_filtered.vcf.gz > temp_geuvadis.vcf
