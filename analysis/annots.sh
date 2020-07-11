@@ -17,6 +17,7 @@ rm -rf txrevise
 git clone git@github.com:andreasvija/txrevise.git
 cd txrevise
 git checkout CAGE
+git pull
 
 cp ../new_transcripts_25.rds data/
 cd scripts
@@ -24,4 +25,4 @@ mkdir processed
 wget -O processed/Homo_sapiens.GRCh38.96.gtf.gz ftp://ftp.ensembl.org/pub/release-96/gtf/homo_sapiens/Homo_sapiens.GRCh38.96.gtf.gz
 
 mkdir SlurmOut
-snakemake -s cage.Snakefile -p processed/Homo_sapiens.GRCh38.96_log.txt --cluster ./snakemake_submit_UT.py --jobs 100 --config fill=TRUE start_end_diff=25 cage=../data/CAGE_promoter_annotations_25.rds --use-singularity
+snakemake -s cage.Snakefile -p processed/Homo_sapiens.GRCh38.96_log.txt --cluster ./snakemake_submit_UT.py --jobs 100 --config fill=TRUE start_end_diff=25 --use-singularity
