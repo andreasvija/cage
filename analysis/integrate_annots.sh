@@ -22,5 +22,5 @@ wget -O processed/Homo_sapiens.GRCh38.96.gtf.gz ftp://ftp.ensembl.org/pub/releas
 mkdir SlurmOut
 source ~/.bashrc
 conda activate snakemake
-snakemake -ps cage.Snakefile processed/Homo_sapiens.GRCh38.96_log.txt --cluster ./snakemake_submit_UT.py --jobs 100 --config fill=TRUE start_end_diff=25 annotation=Homo_sapiens.GRCh38.96 --use-singularity
+snakemake -ps cage.Snakefile processed/Homo_sapiens.GRCh38.96_log.txt --cluster ./snakemake_submit_UT.py --jobs 100 --config fill=TRUE start_end_diff=25 --use-singularity
 conda deactivate
