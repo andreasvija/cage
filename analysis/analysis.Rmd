@@ -57,8 +57,8 @@ annots_results = annots_results %>%
 ```
 
 ```{r}
-upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise.grp_1.upstream.gff3")
-upstream2 = GenomicFeatures::makeTxDbFromGFF("txrevise.grp_2.upstream.gff3")
+upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_1.upstream.gff3")
+upstream2 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_2.upstream.gff3")
 genes1 = AnnotationDbi::select(upstream1, keys=keys(upstream1, "GENEID"), keytype="GENEID", columns="GENEID")
 genes2 = AnnotationDbi::select(upstream2, keys=keys(upstream2, "GENEID"), keytype="GENEID", columns="GENEID")
 genes1 = unlist(genes1, use.names=FALSE)

@@ -28,7 +28,7 @@ NXF_VER=18.10.1 nextflow \
 	--skip_stringtie \
 	--saveAlignedIntermediates \
 	--run_txrevise \
-	--txrevise_gffs '/gpfs/hpc/projects/genomic_references/annotations/txrevise/Homo_sapiens.GRCh38.96_CAGE_25bp/*.gff3' \
+	--txrevise_gffs '../../analysis/txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/*.gff3' \
 	-resume \
 	-executor.queueSize 100
 
@@ -38,7 +38,7 @@ nextflow \
 	-resume \
 	--study_name txrevise_annots \
 	--quant_results_path results \
-	--sample_meta_path /gpfs/hpc/projects/eQTLCatalogue/SampleArcheology/studies/cleaned/GEUVADIS_EUR.tsv \
+	--sample_meta_path ../../analysis/GEUVADIS_EUR.tsv \
 	--txrev_pheno_meta_path /gpfs/hpc/projects/genomic_references/annotations/txrevise/Homo_sapiens.GRCh38.96_CAGE_25bp/txrevise_Ensembl_96_CAGE_25bp_phenotype_metadata.tsv.gz \
 	--skip_exon_norm \
 	--skip_tx_norm \

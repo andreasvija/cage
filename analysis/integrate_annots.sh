@@ -6,8 +6,11 @@
 #SBATCH -c 1
 #SBATCH --mem=4G
 
+module load R/3.6.1
 module load squashfs/4.3-lt2t
 module load singularity/3.5.3
+
+Rscript makeTxreviseCageMetadata.R
 
 git clone git@github.com:andreasvija/txrevise.git
 cd txrevise
@@ -15,7 +18,6 @@ git checkout CAGE
 git pull
 
 cd scripts
-mkdir processed
 cp ../../new_transcripts_25.rds processed/
 wget -O processed/Homo_sapiens.GRCh38.96.gtf.gz ftp://ftp.ensembl.org/pub/release-96/gtf/homo_sapiens/Homo_sapiens.GRCh38.96.gtf.gz
 
