@@ -40,6 +40,6 @@ txrevise_meta = event_quants %>%
   dplyr::select(required_phenotype_meta_columns, dplyr::everything())
 
 #Save expression matrix
-gz2 = gzfile("results/txrevise_Ensembl_96_CAGE_10bp_phenotype_metadata.tsv.gz", "w")
+gz2 = gzfile("txrevise_CAGE_25_Ensembl_96_phenotype_metadata.tsv.gz", "w")
 write.table(txrevise_meta, gz2, sep = "\t", quote = FALSE, row.names = F)
 close(gz2)
