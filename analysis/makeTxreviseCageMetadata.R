@@ -37,7 +37,8 @@ txrevise_meta = event_quants %>%
   dplyr::left_join(dplyr::select(gene_metadata, -phenotype_id, -phenotype_gc_content,
                                  -group_id, -quant_id, -phenotype_length),
                    by = "gene_id") %>%
-  dplyr::select(required_phenotype_meta_columns, dplyr::everything())
+  dplyr::select(required_phenotype_meta_columns, dplyr::everything()) %>%
+  na.omit()
 
 #Save expression matrix
 gz2 = gzfile("txrevise_CAGE_25_Ensembl_96_phenotype_metadata.tsv.gz", "w")
