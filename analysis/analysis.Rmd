@@ -181,11 +181,27 @@ write_delim(top_variants, "variants.txt")
 
 to_visualize = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% #896
   select(gene, top_variant)
-write_tsv(to_visualize, "bwa_better.tsv")
+write_tsv(to_visualize, "cage_over_tx.tsv")
 
 to_visualize = tx_tops[! tx_tops$gene %in% bwa_tops$gene,] %>% #828
   select(gene, top_variant)
-write_tsv(to_visualize, "tx_better.tsv")
+write_tsv(to_visualize, "tx_over_cage.tsv")
+```
+
+```{r}
+# which genes and variants were very significant after new annots but not with cage
+
+interesting1 = bwa_results[bwa_results$gene %in% added,c("gene", "p_adjusted_beta_adjusted")]
+colnames(interesting1) = c("gene", "p_cage")
+interesting2 = ann_tops[ann_tops$gene %in% added, c("gene", "p_adjusted_beta_adjusted")]
+colnames(interesting2) = c("gene", "p_ann")
+
+interesting = merge(interesting1, interesting2) %>%
+  filter(p_cage > 0.05, p_ann < 1e-10)
+
+to_visualize = ann_tops[ann_tops$gene %in% interesting$gene,] %>%
+  select(gene, top_variant)
+write_tsv(to_visualize, "ann_over_cage.tsv") # visu problems because did not have non-cage top variants i think
 ```
 
 ```{r}
@@ -239,22 +255,6 @@ for (fig in list(fig1, fig2, fig3)) {
           xlim(0,50) + ylim(0,50) +
           theme(legend.position="top"))
 }
-```
-
-```{r}
-# which genes and variants were very significant after new annots but not with cage
-
-interesting1 = bwa_results[bwa_results$gene %in% added,c("gene", "p_adjusted_beta_adjusted")]
-colnames(interesting1) = c("gene", "p_cage")
-interesting2 = ann_tops[ann_tops$gene %in% added, c("gene", "p_adjusted_beta_adjusted")]
-colnames(interesting2) = c("gene", "p_ann")
-
-interesting = merge(interesting1, interesting2) %>%
-  filter(p_cage > 0.05, p_ann < 1e-10)
-
-to_visualize = ann_tops[ann_tops$gene %in% interesting$gene,] %>%
-  select(gene, top_variant)
-write_tsv(to_visualize, "ann_over_cage.tsv") # visu problems because did not have non-cage top variants i think
 ```
 
 ```{r}

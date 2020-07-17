@@ -15,9 +15,16 @@ library("readr")
 library("stringr")
 library("reshape2")
 library("tidyr")
+library("optparse")
 
 set.seed(123)
 
+
+option_list <- list(
+  make_option(c("--kind"), type="character", default="cage_over_tx",
+              help="What kind of visualization to make - cage_over_tx, tx_over_cage or ann_over_cage", metavar = "path")
+)
+opt <- parse_args(OptionParser(option_list=option_list))
 
 
 sample_mapping = read_tsv("../qtlmap_prep/sampleMetadata.tsv") %>%
@@ -76,17 +83,15 @@ sample_data = data_frame(sample_id=summ$sample_id, scaling_factor=summ$N/1000000
   mutate(bigWig = paste0("~/cage/align/results/", sample_id, ".bw"))
 
 
-to_visualize = read_tsv("bwa_better.tsv")
-
-promoterMetadata = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciiicii") %>%
-  filter(gene_name %in% to_visualize$gene)
-
-
 upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_1.upstream.gff3")
 upstream2 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_2.upstream.gff3")
 exons_list1 = GenomicFeatures::exonsBy(upstream1, by = "tx", use.names = TRUE)
 exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 
+
+to_visualize = read_tsv(paste0(opt$kind, ".tsv"))
+promoterMetadata = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciiicii") %>%
+  filter(gene_name %in% to_visualize$gene)
 
 
 start_time = Sys.time()
@@ -169,7 +174,7 @@ temp = tryCatch({
 
   combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3)
 
-  ggsave(paste("plots/", n, observed_gene, ".pdf", sep="_"), combo)
+  ggsave(paste0("plots/", opt$kind, "/", n, "_", observed_gene, ".pdf"), combo)
 
 }, error = function(e){print(e)})
 }
