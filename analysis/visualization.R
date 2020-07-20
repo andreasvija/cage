@@ -1,4 +1,4 @@
-# TODO: <simpleError: object 'sample_id' not found>
+# TODO: <simpleError: object 'sample_id' not found> : no individual -> variant mapping found?
 wd = "~/cage/analysis/"
 setwd(wd)
 
@@ -153,22 +153,24 @@ temp = tryCatch({
 
   sample_data_this = sample_data %>%
     merge(genotypes_sub) %>%
-    mutate(track_id=alleles, colour_group=alleles) %>%
+    mutate(colour_group=alleles) %>%
     select(-alleles)
 
   sample_data_this_cage = sample_data_this %>%
-    filter(track_id %in% mapping)
+    filter(track_id %in% mapping) %>%
+    mutate(track_id="CAGE")
   sample_data_this_geuvadis = sample_data_this %>%
-    filter(track_id %in% mapping_)
+    filter(track_id %in% mapping_) %>%
+    mutate(track_id="RNA-seq")
 
 
   a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_cage, coverage_type="line",
-                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8", "#a1dab4", "#41b6c4", "#225ea8"),
+                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8"),
                    transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
                    rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
 
   b = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis, coverage_type="line",
-                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8", "#a1dab4", "#41b6c4", "#225ea8"), # TODO half?
+                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8"),
                    transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
                    rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
 
