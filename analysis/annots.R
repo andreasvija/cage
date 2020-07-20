@@ -14,9 +14,9 @@ library("stringr")
 library("reshape2")
 library("tidyr")
 
-PROMOTER_BUFFER_RANGE = 10
-EXON_START_BUFFER_RANGE = 10
-EXON_BACK_RANGE = 100
+PROMOTER_BUFFER_RANGE = 25
+EXON_START_BUFFER_RANGE = 25
+EXON_BACK_RANGE = 1000
 
 shared_genes = readRDS("common_genes.rds")
 
@@ -211,5 +211,5 @@ length(unique(new_transcript_genes))
 print("genes")
 
 all_new_transcripts = GRangesList(all_new_transcripts)
-saveRDS(all_new_transcripts, "new_transcripts_10.rds")
-saveRDS(new_transcript_genes, "new_transcript_genes_10.rds")
+saveRDS(all_new_transcripts, "new_transcripts_25.rds")
+saveRDS(new_transcript_genes, "new_transcript_genes_25.rds")

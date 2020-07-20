@@ -38,7 +38,7 @@ nextflow \
 	-resume \
 	--study_name txrevise \
 	--quant_results_path results \
-	--sample_meta_path /gpfs/hpc/projects/eQTLCatalogue/SampleArcheology/studies/cleaned/GEUVADIS_EUR.tsv \
+	--sample_meta_path ../../analysis/GEUVADIS_EUR.tsv \
 	--txrev_pheno_meta_path /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/phenotype_metadata/txrevise_Ensembl_96_phenotype_metadata.tsv.gz \
 	--skip_exon_norm \
 	--skip_tx_norm \

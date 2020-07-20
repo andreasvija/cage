@@ -146,31 +146,31 @@ ann_tops = annots_results_common %>%
 # Analysis
 
 ```{r}
-dim(bwa_results)[1] # BWA total: 19845
-sum(bwa_results$total_phenotypes) # BWA promotor total: 95926 (pre-qtlmap number bigger cause only chr 1-22 here)
-dim(txrevise_results)[1] # txrevise total: 20176
-dim(annots_results)[1] # annots total: 20176
-length(intersect(bwa_results$gene, txrevise_results$gene)) # common total: 15137
+dim(bwa_results)[1] # BWA total: 19 113
+sum(bwa_results$total_phenotypes) # BWA promotor total: 91 521 (pre-qtlmap number bigger cause genes with not enough variants discarded?)
+dim(txrevise_results)[1] # txrevise total: 20 176
+dim(annots_results)[1] # annots total: 20 176
+length(intersect(bwa_results$gene, txrevise_results$gene)) # common total: 15 690
 length(intersect(bwa_results$gene, annots_results$gene)) # same
 
-dim(bwa_tops)[1] # BWA tops: 1341
-dim(tx_tops)[1] # txrevise tops: 1258
-dim(ann_tops)[1] # annots tops: [10] 1397 (+139) [25] 1341 (+83)
+sum(txrevise_results$total_phenotypes) # 79 963
+sum(annots_results$total_phenotypes) # 83 064
+sum(annots_results$total_phenotypes) - sum(txrevise_results$total_phenotypes) # 3301, expected N=25 -> 38 730 annotations added
 
-sum(bwa_tops$gene %in% txrevise_results$gene) # common BWA tops: 1224
-sum(tx_tops$gene %in% bwa_results$gene) # common txrevise tops: 1156
-sum(ann_tops$gene %in% bwa_results$gene) # common annots tops: [10] 1295 (+139) [25] 1241 (+85)
+dim(bwa_tops)[1] # BWA tops: 1217
+dim(tx_tops)[1] # txrevise tops: 1086
+dim(ann_tops)[1] # annots tops: [10]  (+) [25] 1068 (-18)
 
 removed = setdiff(tx_tops$gene, ann_tops$gene)
-length(removed) # annotations removed: [10] 287 [25] 237
+length(removed) # annotations removed: [10]  [25] 83
 added = setdiff(ann_tops$gene, tx_tops$gene)
-length(added) # annotations added: [10] 426 [25] 320
+length(added) # annotations added: [10]  [25] 65
 
-length(intersect(bwa_tops$gene, tx_tops$gene)) # common both tops: 328
-length(intersect(bwa_tops$gene, ann_tops$gene)) # common after tops: [10] 376 (+48) [25] 342 (+14)
+length(intersect(bwa_tops$gene, tx_tops$gene)) # common both tops: 305
+length(intersect(bwa_tops$gene, ann_tops$gene)) # common after tops: [10]  (+) [25] 304 (-1)
 
-length(intersect(bwa_tops$top_variant, tx_tops$top_variant)) # 44
-length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # [10] 59 [25] 47
+length(intersect(bwa_tops$top_variant, tx_tops$top_variant)) # 41
+length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # [10]  [25] 43
 ```
 
 
@@ -179,17 +179,17 @@ top_variants = rbind(bwa_tops[c("top_variant")], tx_tops[c("top_variant")], ann_
   unique()
 write_delim(top_variants, "variants.txt")
 
-to_visualize = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% #896
+to_visualize = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% #912
   select(gene, top_variant)
 write_tsv(to_visualize, "cage_over_tx.tsv")
 
-to_visualize = tx_tops[! tx_tops$gene %in% bwa_tops$gene,] %>% #828
+to_visualize = tx_tops[! tx_tops$gene %in% bwa_tops$gene,] %>% #781
   select(gene, top_variant)
 write_tsv(to_visualize, "tx_over_cage.tsv")
 ```
 
 ```{r}
-# which genes and variants were very significant after new annots but not with cage
+# which genes and variants were newly significant after new annots but not with cage (false positives?)
 
 interesting1 = bwa_results[bwa_results$gene %in% added,c("gene", "p_adjusted_beta_adjusted")]
 colnames(interesting1) = c("gene", "p_cage")
@@ -197,11 +197,11 @@ interesting2 = ann_tops[ann_tops$gene %in% added, c("gene", "p_adjusted_beta_adj
 colnames(interesting2) = c("gene", "p_ann")
 
 interesting = merge(interesting1, interesting2) %>%
-  filter(p_cage > 0.05, p_ann < 1e-10)
+  filter(p_cage > 0.05, p_ann < 0.05)
 
 to_visualize = ann_tops[ann_tops$gene %in% interesting$gene,] %>%
   select(gene, top_variant)
-write_tsv(to_visualize, "ann_over_cage.tsv") # visu problems because did not have non-cage top variants i think
+write_tsv(to_visualize, "ann_over_cage.tsv")
 ```
 
 ```{r}
