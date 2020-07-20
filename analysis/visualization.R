@@ -1,4 +1,4 @@
-# requires created plots folder
+# TODO: <simpleError: object 'sample_id' not found>
 wd = "~/cage/analysis/"
 setwd(wd)
 
