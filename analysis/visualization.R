@@ -39,11 +39,8 @@ genotypes = read_tsv("variantinfo.vcf")[c(3,10:163)] %>%
 names(genotypes) = c("variant", "genotype_id", "alleles")
 genotypes = genotypes %>%
   merge(sample_mapping) %>%
-  select(-genotype_id)
-
-mapping = list("0", "1", "1", "2")
-names(mapping) = c("0|0", "0|1", "1|0", "1|1")
-genotypes$alleles = mapping[genotypes$alleles]
+  select(-genotype_id) %>%
+  mutate(track_id="CAGE")
 
 genotypes_ = read_tsv("variantinfo_geuvadis.vcf")[c(3,10:454)] %>%
   melt(id.vars=c("ID"))
@@ -51,13 +48,13 @@ names(genotypes_) = c("variant", "genotype_id", "alleles")
 genotypes_ = genotypes_ %>%
   filter(genotype_id %in% sample_mapping_$genotype_id) %>%
   merge(sample_mapping_) %>%
-  select(-genotype_id)
-
-mapping_ = list("G_0", "G_1", "G_1", "G_2")
-names(mapping_) = c("0|0", "0|1", "1|0", "1|1")
-genotypes_$alleles = mapping_[genotypes_$alleles]
+  select(-genotype_id) %>%
+  mutate(track_id="RNA-seq")
 
 genotypes = rbind(genotypes, genotypes_)
+mapping = list("0", "1", "1", "2")
+names(mapping) = c("0|0", "0|1", "1|0", "1|1")
+genotypes$alleles = mapping[genotypes$alleles]
 genotypes$alleles = unlist(genotypes$alleles)
 
 
@@ -157,26 +154,17 @@ temp = tryCatch({
     select(-alleles)
 
   sample_data_this_cage = sample_data_this %>%
-    filter(track_id %in% mapping) %>%
-    mutate(track_id="CAGE")
+    filter(track_id=="CAGE")
   sample_data_this_geuvadis = sample_data_this %>%
-    filter(track_id %in% mapping_) %>%
-    mutate(track_id="RNA-seq")
+    filter(track_id=="RNA-seq")
 
   fill_palette = c("#225ea8", "#884072", "#ef233c")
-  a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_cage, coverage_type="line",
+  a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this, coverage_type="line",
                    fill_palette=fill_palette,
-                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
+                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=FALSE,
                    rescale_introns=TRUE, new_intron_length=100, heights=c(0.5, 0.5))
 
-  b = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis, coverage_type="line",
-                   fill_palette=fill_palette,
-                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
-                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.5, 0.5))
-
-  combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3)
-
-  ggsave(paste0("plots/", opt$kind, "/", n, "_", observed_gene, ".pdf"), combo)
+  ggsave(paste0("plots/", opt$kind, "/", n, "_", observed_gene, ".pdf"), a)
 
 }, error = function(e){print(e)})
 }
