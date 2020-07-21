@@ -143,7 +143,7 @@ temp = tryCatch({
   filtered_exons_g2 = lapply(annot2, pintersect, region_filter, drop.nohit.ranges=TRUE)
   filtered_exons_g2 = filtered_exons_g2[lapply(filtered_exons_g2, length) > 0]
 
-  wide_prom_and_g1 = c(filtered_exons_g1, rangeslists_wide)
+  wide_prom_and_g1 = c(filtered_exons_g1, filtered_exons_g2, rangeslists_wide) # coding regions must be subset of exons?
   prom_and_g2 = c(filtered_exons_g2, rangeslists)
 
 
@@ -163,16 +163,16 @@ temp = tryCatch({
     filter(track_id %in% mapping_) %>%
     mutate(track_id="RNA-seq")
 
-
+  fill_palette = c("#225ea8", "#884072", "#ef233c")
   a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_cage, coverage_type="line",
-                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8"),
+                   fill_palette=fill_palette,
                    transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
-                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
+                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.5, 0.5))
 
   b = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis, coverage_type="line",
-                   fill_palette = c("#a1dab4", "#41b6c4", "#225ea8"),
+                   fill_palette=fill_palette,
                    transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=TRUE,
-                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.6, 0.4))
+                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.5, 0.5))
 
   combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3)
 
