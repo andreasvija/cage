@@ -35,7 +35,7 @@ overlap = intersect(sample_mapping$genotype_id, sample_mapping_$genotype_id) # n
 
 
 genotypes = read_tsv("variantinfo.vcf")[c(3,10:163)] %>%
-  melt(id.vars=c("ID"))
+  reshape2::melt(id.vars=c("ID"))
 names(genotypes) = c("variant", "genotype_id", "alleles")
 genotypes = genotypes %>%
   merge(sample_mapping) %>%
@@ -43,7 +43,7 @@ genotypes = genotypes %>%
   mutate(track_id="CAGE")
 
 genotypes_ = read_tsv("variantinfo_geuvadis.vcf")[c(3,10:454)] %>%
-  melt(id.vars=c("ID"))
+  reshape2::melt(id.vars=c("ID"))
 names(genotypes_) = c("variant", "genotype_id", "alleles")
 genotypes_ = genotypes_ %>%
   filter(genotype_id %in% sample_mapping_$genotype_id) %>%
@@ -146,17 +146,12 @@ temp = tryCatch({
 
   genotypes_sub = genotypes %>%
     filter(variant == observed_variant) %>%
-    select(sample_id, alleles)
+    select(sample_id, alleles, track_id)
 
   sample_data_this = sample_data %>%
     merge(genotypes_sub) %>%
     mutate(colour_group=alleles) %>%
     select(-alleles)
-
-  sample_data_this_cage = sample_data_this %>%
-    filter(track_id=="CAGE")
-  sample_data_this_geuvadis = sample_data_this %>%
-    filter(track_id=="RNA-seq")
 
   fill_palette = c("#225ea8", "#884072", "#ef233c")
   a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this, coverage_type="line",
