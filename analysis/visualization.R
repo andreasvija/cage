@@ -153,13 +153,26 @@ temp = tryCatch({
     mutate(colour_group=alleles) %>%
     select(-alleles)
 
-  fill_palette = c("#225ea8", "#884072", "#ef233c")
-  a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this, coverage_type="line",
-                   fill_palette=fill_palette,
-                   transcript_label=FALSE, plot_fraction=0.2, return_subplots_list=FALSE,
-                   rescale_introns=TRUE, new_intron_length=100, heights=c(0.5, 0.5))
+  sample_data_this_cage = sample_data_this %>%
+    filter(track_id=="CAGE")
+  sample_data_this_geuvadis = sample_data_this %>%
+    filter(track_id=="RNA-seq")
 
-  ggsave(paste0("plots/", opt$kind, "/", n, "_", observed_gene, ".pdf"), a)
+  fill_palette = c("#225ea8", "#884072", "#ef233c")
+
+  a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_cage,
+                   coverage_type="line", fill_palette=fill_palette, transcript_label=FALSE,
+                   plot_fraction=0.2, return_subplots_list=TRUE, rescale_introns=TRUE,
+                   new_intron_length=100, heights=c(0.5, 0.5))
+
+  a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis,
+                   coverage_type="line", fill_palette=fill_palette, transcript_label=FALSE,
+                   plot_fraction=0.2, return_subplots_list=TRUE, rescale_introns=TRUE,
+                   new_intron_length=100, heights=c(0.5, 0.5))
+
+  combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3, align="v")
+
+  ggsave(paste0("plots/", opt$kind, "/", n, "_", observed_gene, ".pdf"), combo)
 
 }, error = function(e){print(e)})
 }
