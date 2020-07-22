@@ -167,7 +167,7 @@ temp = tryCatch({
                    plot_fraction=0.2, return_subplots_list=TRUE, rescale_introns=TRUE,
                    new_intron_length=100, heights=c(0.5, 0.5))
 
-  a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis,
+  b = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis,
                    coverage_type="line", fill_palette=fill_palette, transcript_label=FALSE,
                    plot_fraction=0.2, return_subplots_list=TRUE, rescale_introns=TRUE,
                    new_intron_length=100, heights=c(0.5, 0.5))
