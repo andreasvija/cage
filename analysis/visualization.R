@@ -140,7 +140,9 @@ temp = tryCatch({
   filtered_exons_g2 = lapply(annot2, pintersect, region_filter, drop.nohit.ranges=TRUE)
   filtered_exons_g2 = filtered_exons_g2[lapply(filtered_exons_g2, length) > 0]
 
-  wide_prom_and_g1 = c(filtered_exons_g1, filtered_exons_g2, rangeslists_wide) # coding regions must be subset of exons?
+  # coding regions must be subset of exons i think
+  # g2 should be dark blue, g1 light blue
+  wide_prom_and_g1 = c(filtered_exons_g2, filtered_exons_g1, rangeslists_wide)
   prom_and_g2 = c(filtered_exons_g2, rangeslists)
 
 
