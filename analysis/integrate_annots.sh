@@ -3,8 +3,8 @@
 #SBATCH -p main
 #SBATCH -J integrate_annots
 #SBATCH -t 23:00:00
-#SBATCH -c 8
-#SBATCH --mem=24G
+#SBATCH -c 4
+#SBATCH --mem=8G
 
 ANNOTATION=Homo_sapiens.GRCh38.96
 IFS='.' read -r -a array <<< "$ANNOTATION"
@@ -22,7 +22,8 @@ git pull
 cd scripts
 mkdir processed
 mkdir processed/input
-cp ../../new_transcripts_25.rds processed/input/
+cp ../../../qtlmap_prep/FANTOM5_promoter_annotations.tsv processed/input/promoters.tsv
+cp ../../common_genes.rds processed/input/genes.rds
 wget -O processed/input/${ANNOTATION}.gtf.gz ftp://ftp.ensembl.org/pub/release-${RELEASE_N}/gtf/homo_sapiens/${ANNOTATION}.gtf.gz
 
 if [ ! -f txrevise.img ]; then
