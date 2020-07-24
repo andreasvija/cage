@@ -67,7 +67,7 @@ promoterAnnots = unnest(promoterAnnots, cols=c(gene_name)) # 97 320
 # give genes ID-s instead of names
 
 # mapping version 1 - file
-
+# https://zenodo.org/record/3366011 (26.06.2020)
 geneMapping = read_tsv("transcript_usage_Ensembl_96_phenotype_metadata.tsv", col_types="ccccciicccci") %>%
   select(gene_id, gene_name) %>% # 207 749
   unique() # 58 434
@@ -83,7 +83,7 @@ uniqueGeneNames = uniqueGeneNames$gene_name
 geneMapping = geneMapping[geneMapping$gene_name %in% uniqueGeneNames,] # 56 835
 
 
-# mapping version 2 - gprofiler2 (not used - as good as from file, but more of a black box)
+# mapping version 2 - gprofiler2 (not used - roughly as good as from file, but more of a black box)
 '
 library("gprofiler2")
 

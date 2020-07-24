@@ -1,28 +1,24 @@
-wd = "~/cage/analysis/"
-setwd(wd)
+# TODO: rename, remove calling script, lift to txrevise, integrate into snakemake
 
 library("data.table") # %like%
 library("rtracklayer")
 library("GenomicRanges")
 library("GenomicFeatures")
-library("wiggleplotr")
 
 library("dplyr")
-library("ggplot2")
 library("readr")
-library("stringr")
-library("reshape2")
-library("tidyr")
 
 PROMOTER_BUFFER_RANGE = 25
-EXON_START_BUFFER_RANGE = 25
+EXON_START_BUFFER_RANGE = PROMOTER_BUFFER_RANGE
 EXON_BACK_RANGE = 1000
 
-shared_genes = readRDS("common_genes.rds")
+shared_genes = readRDS("common_genes.rds") # character vector consisting of ENSEMBL ID-s of genes, can be made optional
 
+# from clean_promoters.R
 promoter_annots = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciiicii") %>%
   filter(gene_name %in% shared_genes)
 
+# TODO: in future from snakemake output
 upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise.grp_1.upstream.gff3")
 upstream2 = GenomicFeatures::makeTxDbFromGFF("txrevise.grp_2.upstream.gff3")
 exons_list1 = GenomicFeatures::exonsBy(upstream1, by = "tx", use.names = TRUE)
@@ -35,7 +31,7 @@ all_new_transcripts = list()
 new_transcript_genes = c()
 
 start_time = Sys.time()
-for (gene in shared_genes) { # c("ENSG00000151694")
+for (gene in shared_genes) {
   gene_new_transcripts = list()
 
   #for every promoter belonging to the gene
@@ -159,7 +155,7 @@ for (gene in shared_genes) { # c("ENSG00000151694")
     utilized_promoters = c(utilized_promoters, list(promoter))
   }
 
-  # visualization
+  # visualization, requires wiggleplotr
   '
   spec = promoters
 
@@ -208,8 +204,9 @@ print("Created")
 length(all_new_transcripts)
 print("transcripts over")
 length(unique(new_transcript_genes))
-print("genes")
+print("genes using distance")
+PROMOTER_BUFFER_RANGE
 
 all_new_transcripts = GRangesList(all_new_transcripts)
-saveRDS(all_new_transcripts, "new_transcripts_25.rds")
-saveRDS(new_transcript_genes, "new_transcript_genes_25.rds")
+saveRDS(all_new_transcripts, paste0("new_transcripts_", PROMOTER_BUFFER_RANGE, ".rds"))
+saveRDS(new_transcript_genes, paste0("new_transcript_genes_", PROMOTER_BUFFER_RANGE, ".rds"))

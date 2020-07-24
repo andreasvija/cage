@@ -1,4 +1,6 @@
 # TODO: <simpleError: object 'sample_id' not found> : no individual -> variant mapping found?
+# TODO: use profiler
+
 wd = "~/cage/analysis/"
 setwd(wd)
 
@@ -79,9 +81,10 @@ summ = rbind(summ, summ_)
 sample_data = data_frame(sample_id=summ$sample_id, scaling_factor=summ$N/1000000) %>%
   mutate(bigWig = paste0("~/cage/align/results/", sample_id, ".bw"))
 
-
-upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_1.upstream.gff3")
-upstream2 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_2.upstream.gff3")
+# mustn't contain cage annotations
+# TODO: from snakemake output
+upstream1 = GenomicFeatures::makeTxDbFromGFF(NULL)
+upstream2 = GenomicFeatures::makeTxDbFromGFF(NULL)
 exons_list1 = GenomicFeatures::exonsBy(upstream1, by = "tx", use.names = TRUE)
 exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 
@@ -92,7 +95,7 @@ promoterMetadata = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", c
 
 
 start_time = Sys.time()
-for (n in c(1: (dim(to_visualize)[1]) )) { # c(1: (dim(to_visualize)[1]) )
+for (n in c(1: (dim(to_visualize)[1]) )) {
 temp = tryCatch({
 
   observed_gene = to_visualize$gene[n]

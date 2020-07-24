@@ -34,8 +34,6 @@ set.seed(123)
 # Load in
 
 ```{r}
-#col_names = c("gene", "chr", "phenotype_start", "phenotype_end", "strand", "top_phenotype", "total_phenotypes", "variants_tested", "variant_distance", "top_variant", "top_variant_chr", "top_variant_start", "top_variant_end", "df", "dummy", "beta_1", "beta_2", "p_nominal", "slope", "p_adjusted", "p_adjusted_beta")
-#col_types = "cciicciiicciiiddddddd"
 col_names = c("gene", "top_phenotype", "total_phenotypes", "variants_tested", "top_variant", "top_variant_chr", "top_variant_start", "p_nominal", "beta", "p_adjusted", "p_adjusted_beta")
 col_types = "cciiccidddd"
 
@@ -95,11 +93,7 @@ fill_genes <- function(x, common=FALSE) {
   }
   old_genes = unlist(x$gene, use.names=FALSE)
   new_genes = setdiff(gene_source, old_genes)
-  
-  #additional = data_frame(gene=new_genes, chr="_", phenotype_start=1, phenotype_end=1, strand="_", top_phenotype="_",
-  #                        total_phenotypes=1, variants_tested=1, variant_distance=1, top_variant="_", top_variant_chr="_",
-  #                        top_variant_start=1, top_variant_end=1, df=1, dummy=1, beta_1=1, beta_2=1, p_nominal=0.99,
-  #                        slope=1, p_adjusted=0.99, p_adjusted_beta=0.99, p_adjusted_beta_adjusted=0.99, kind="upstream")
+
   additional = data_frame(gene=new_genes, top_phenotype="_", total_phenotypes=1, variants_tested=1, top_variant="_", 
                           top_variant_chr="_", top_variant_start=1, p_nominal=0.99, beta=1, p_adjusted=0.99, 
                           p_adjusted_beta=0.99, p_adjusted_beta_adjusted=0.99, kind="upstream")
