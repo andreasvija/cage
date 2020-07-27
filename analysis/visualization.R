@@ -167,12 +167,12 @@ temp = tryCatch({
 
   a = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_cage,
                    coverage_type="line", fill_palette=fill_palette, transcript_label=FALSE,
-                   plot_fraction=0.2, return_subplots_list=TRUE, rescale_introns=TRUE,
+                   plot_fraction=0.1, return_subplots_list=TRUE, rescale_introns=TRUE,
                    new_intron_length=100, heights=c(0.5, 0.5))
 
   b = plotCoverage(exons=wide_prom_and_g1, cdss=prom_and_g2, track_data=sample_data_this_geuvadis,
                    coverage_type="line", fill_palette=fill_palette, transcript_label=FALSE,
-                   plot_fraction=0.2, return_subplots_list=TRUE, rescale_introns=TRUE,
+                   plot_fraction=0.1, return_subplots_list=TRUE, rescale_introns=TRUE,
                    new_intron_length=100, heights=c(0.5, 0.5))
 
   combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3, align="v")
