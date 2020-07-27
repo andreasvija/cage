@@ -22,10 +22,16 @@ git pull
 cd scripts
 mkdir processed
 mkdir processed/input
-cp ../../../qtlmap_prep/FANTOM5_promoter_annotations.tsv processed/input/promoters.tsv
-cp ../../common_genes.rds processed/input/genes.rds
-wget -O processed/input/${ANNOTATION}.gtf.gz ftp://ftp.ensembl.org/pub/release-${RELEASE_N}/gtf/homo_sapiens/${ANNOTATION}.gtf.gz
 
+if [ ! -f processed/input/promoters.tsv ]; then
+    cp ../../../qtlmap_prep/FANTOM5_promoter_annotations.tsv processed/input/promoters.tsv
+fi
+if [ ! -f processed/input/genes.rds ]; then
+    cp ../../common_genes.rds processed/input/genes.rds
+fi
+if [ ! -f processed/input/${ANNOTATION}.gtf.gz ]; then
+    wget -O processed/input/${ANNOTATION}.gtf.gz ftp://ftp.ensembl.org/pub/release-${RELEASE_N}/gtf/homo_sapiens/${ANNOTATION}.gtf.gz
+fi
 if [ ! -f txrevise.img ]; then
     singularity build txrevise.img docker://andreasvija/txrevise:latest
 fi
