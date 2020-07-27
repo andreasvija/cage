@@ -27,7 +27,7 @@ cp ../../common_genes.rds processed/input/genes.rds
 wget -O processed/input/${ANNOTATION}.gtf.gz ftp://ftp.ensembl.org/pub/release-${RELEASE_N}/gtf/homo_sapiens/${ANNOTATION}.gtf.gz
 
 if [ ! -f txrevise.img ]; then
-    singularity build txrevise.img docker://kauralasoo/txrevise:latest
+    singularity build txrevise.img docker://andreasvija/txrevise:latest
 fi
 
 mkdir SlurmOut
@@ -35,5 +35,5 @@ source ~/.bashrc
 conda activate snakemake
 OUTPUT=processed/${ANNOTATION}_all_completed.txt
 rm $OUTPUT
-snakemake -pns cage.Snakefile $OUTPUT --cluster ./snakemake_submit_UT.py --jobs 200 --config fill=TRUE Ns="25" --use-singularity
+snakemake -ps cage.Snakefile $OUTPUT --cluster ./snakemake_submit_UT.py --jobs 200 --config fill=TRUE Ns="25" --use-singularity
 conda deactivate
