@@ -32,6 +32,9 @@ fi
 if [ ! -f processed/input/${ANNOTATION}.gtf.gz ]; then
     wget -O processed/input/${ANNOTATION}.gtf.gz ftp://ftp.ensembl.org/pub/release-${RELEASE_N}/gtf/homo_sapiens/${ANNOTATION}.gtf.gz
 fi
+if [ ! -f processed/input/gene_metadata.tsv.gz ]; then
+    wget -O processed/input/gene_metadata.tsv.gz https://zenodo.org/record/3366011/files/gene_counts_Ensembl_96_phenotype_metadata.tsv.gz
+fi
 if [ ! -f txrevise.img ]; then
     singularity build txrevise.img docker://andreasvija/txrevise:latest
 fi
