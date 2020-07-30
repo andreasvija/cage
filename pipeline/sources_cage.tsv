@@ -1,2 +1,2 @@
 qtl_subset	count_matrix	pheno_meta	sample_meta	vcf	tpm_file
-bwa_cage	../../qtlmap_prep/countMatrix.tsv	../../qtlmap_prep/phenotypeMetadata.tsv	../../qtlmap_prep/sampleMetadata.tsv	/gpfs/hpc/projects/GENCORD/Garieri_2017/Garieri_filtered.no_DS.vcf.gz	qtlmap/null.txt
+bwa_cage	../../qtlmap_prep/countMatrix.tsv	../../qtlmap_prep/phenotypeMetadata.tsv	../../qtlmap_prep/sampleMetadata.tsv	../../qtlmap_prep/cage_common.vcf.gz	qtlmap/null.txt

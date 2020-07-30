@@ -1,2 +1,2 @@
 qtl_subset	count_matrix	pheno_meta	sample_meta	vcf	tpm_file
-txrevise_annots	qcnorm_out/txrevise_annots/normalised/txrev/qtl_group_split_norm/GEUVADIS.LCL.tsv	../../analysis/txrevise_CAGE_25_Ensembl_96_phenotype_metadata.tsv.gz	../../analysis/GEUVADIS_EUR.tsv	/gpfs/hpc/projects/genomic_references/GEUVADIS/genotypes/GEUVADIS_GRCh38_filtered.vcf.gz	qtlmap/null.txt
+txrevise_annots	qcnorm_out/txrevise_annots/normalised/txrev/qtl_group_split_norm/GEUVADIS.LCL.tsv	../../analysis/txrevise_CAGE_25_Ensembl_96_phenotype_metadata.tsv.gz	../../analysis/GEUVADIS_EUR.tsv	../../qtlmap_prep/txrevise_common.vcf.gz	qtlmap/null.txt
