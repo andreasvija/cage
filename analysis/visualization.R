@@ -81,10 +81,10 @@ summ = rbind(summ, summ_)
 sample_data = data_frame(sample_id=summ$sample_id, scaling_factor=summ$N/1000000) %>%
   mutate(bigWig = paste0("~/cage/align/results/", sample_id, ".bw"))
 
-# mustn't contain cage annotations
-# TODO: from snakemake output
-upstream1 = GenomicFeatures::makeTxDbFromGFF(NULL)
-upstream2 = GenomicFeatures::makeTxDbFromGFF(NULL)
+upstream1 = GenomicFeatures::makeTxDbFromGFF(
+  "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_1.upstream.gff3")
+upstream2 = GenomicFeatures::makeTxDbFromGFF(
+  "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_2.upstream.gff3")
 exons_list1 = GenomicFeatures::exonsBy(upstream1, by = "tx", use.names = TRUE)
 exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 

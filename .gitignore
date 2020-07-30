@@ -8,14 +8,9 @@ align/progress.txt
 
 qtlmap_prep/countMatrix.tsv
 
-pipeline/*
-!pipeline/reset.sh
-!pipeline/cage.sh
-!pipeline/annots.sh
-!pipeline/txrevise.sh
-!pipeline/sources_cage.tsv
-!pipeline/sources_txrevise.tsv
-!pipeline/sources_annots.tsv
+pipeline/cage
+pipeline/annots
+pipeline/txrevise
 
 analysis/txrevise/
 analysis/plots/

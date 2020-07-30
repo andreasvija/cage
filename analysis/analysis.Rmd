@@ -33,11 +33,38 @@ set.seed(123)
 
 # Load in
 
+Starting from now, code requires qtlmap output for CAGE
+
 ```{r}
 col_names = c("gene", "top_phenotype", "total_phenotypes", "variants_tested", "top_variant", "top_variant_chr", "top_variant_start", "p_nominal", "beta", "p_adjusted", "p_adjusted_beta")
 col_types = "cciiccidddd"
 
 bwa_results = read_delim("bwa.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+```
+
+Starting from now, code also requires regular txrevise output
+
+```{r}
+upstream1 = GenomicFeatures::makeTxDbFromGFF(
+  "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_1.upstream.gff3")
+upstream2 = GenomicFeatures::makeTxDbFromGFF(
+  "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_2.upstream.gff3")
+genes1 = AnnotationDbi::select(upstream1, keys=keys(upstream1, "GENEID"), keytype="GENEID", columns="GENEID")
+genes2 = AnnotationDbi::select(upstream2, keys=keys(upstream2, "GENEID"), keytype="GENEID", columns="GENEID")
+genes1 = unlist(genes1, use.names=FALSE)
+genes2 = unlist(genes2, use.names=FALSE)
+
+genes = union(sapply(genes1, fun), sapply(genes2, fun))
+```
+
+```{r}
+common_genes = intersect(bwa_results$gene, genes)
+saveRDS(common_genes, "common_genes.rds")
+```
+
+Starting from now, code also requires qtlmap output for txrevise and txrevise + new annotations
+
+```{r}
 txrevise_results = read_delim("txrev.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 annots_results = read_delim("txrev_annots_25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 
@@ -55,20 +82,6 @@ annots_results = annots_results %>%
 ```
 
 ```{r}
-upstream1 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_1.upstream.gff3")
-upstream2 = GenomicFeatures::makeTxDbFromGFF("txrevise/scripts/processed/Homo_sapiens.GRCh38.96/merged/txrevise.grp_2.upstream.gff3")
-genes1 = AnnotationDbi::select(upstream1, keys=keys(upstream1, "GENEID"), keytype="GENEID", columns="GENEID")
-genes2 = AnnotationDbi::select(upstream2, keys=keys(upstream2, "GENEID"), keytype="GENEID", columns="GENEID")
-genes1 = unlist(genes1, use.names=FALSE)
-genes2 = unlist(genes2, use.names=FALSE)
-
-genes = union(sapply(genes1, fun), sapply(genes2, fun))
-```
-
-```{r}
-common_genes = intersect(bwa_results$gene, genes)
-saveRDS(common_genes, "common_genes.rds")
-
 bwa_results_common = bwa_results[bwa_results$gene %in% common_genes,]
 txrevise_results_common = txrevise_results[txrevise_results$gene %in% common_genes,]
 annots_results_common = annots_results[annots_results$gene %in% common_genes,]
