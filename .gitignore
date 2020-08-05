@@ -13,7 +13,7 @@ pipeline/annots
 pipeline/txrevise
 
 analysis/txrevise/
-analysis/plots/
+analysis/plots*/
 *.gff3
 *.vcf.gz
 
