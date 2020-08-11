@@ -1,0 +1,2 @@
+qtl_subset	count_matrix	pheno_meta	sample_meta	vcf	tpm_file
+txrevise_annots	qcnorm_out/txrevise_annots/normalised/txrev/qtl_group_split_norm/GEUVADIS.LCL.tsv	../../analysis/txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-100/txrevise_CAGE-100_phenotype_metadata.tsv.gz	../../analysis/GEUVADIS_EUR.tsv	../../qtlmap_prep/txrevise_common.vcf.gz	qtlmap/null.txt
