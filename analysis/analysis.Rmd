@@ -37,7 +37,7 @@ set.seed(123)
 col_names = c("gene", "top_phenotype", "total_phenotypes", "variants_tested", "top_variant", "top_variant_chr", "top_variant_start", "p_nominal", "beta", "p_adjusted", "p_adjusted_beta")
 col_types = "cciiccidddd"
 
-bwa_results = read_delim("bwa.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+bwa_results = read_delim("bwa.permuted.multi.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 txrevise_results = read_delim("txrev.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 annots_results = read_delim("txrev_annots_25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 
@@ -173,13 +173,13 @@ top_variants = rbind(bwa_tops[c("top_variant")], tx_tops[c("top_variant")], ann_
   unique()
 write_delim(top_variants, "variants.txt")
 
-to_visualize = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% #912
+cage_over_tx = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% #912
   select(gene, top_variant)
-write_tsv(to_visualize, "cage_over_tx.tsv")
+write_tsv(cage_over_tx, "cage_over_tx.tsv")
 
-to_visualize = tx_tops[! tx_tops$gene %in% bwa_tops$gene,] %>% #781
+tx_over_cage = tx_tops[! tx_tops$gene %in% bwa_tops$gene,] %>% #781
   select(gene, top_variant)
-write_tsv(to_visualize, "tx_over_cage.tsv")
+write_tsv(tx_over_cage, "tx_over_cage.tsv")
 ```
 
 ```{r}
@@ -193,9 +193,80 @@ colnames(interesting2) = c("gene", "p_ann")
 interesting = merge(interesting1, interesting2) %>%
   filter(p_cage > 0.05, p_ann < 0.05)
 
-to_visualize = ann_tops[ann_tops$gene %in% interesting$gene,] %>%
+ann_over_cage = ann_tops[ann_tops$gene %in% interesting$gene,] %>%
   select(gene, top_variant)
-write_tsv(to_visualize, "ann_over_cage.tsv")
+write_tsv(ann_over_cage, "ann_over_cage.tsv")
+```
+
+```{r}
+counts = read_tsv("../pipeline/txrevise/results/featureCounts/merged_gene_counts.txt") %>%
+  tidyr::separate(phenotype_id, c("gene", "second", "third")) %>%
+  filter(is.na(third)) %>%
+  select(-second, -third)
+
+counts[2:length(counts)] = counts[2:length(counts)] * 1000000 / apply(counts[2:length(counts)], 2, sum)
+
+cage_only_top_genes = cage_over_tx$gene
+tx_only_top_genes = tx_over_cage$gene
+both_top_genes = intersect(bwa_tops$gene, tx_tops$gene)
+
+counts[,"top_in"] = "None"
+counts[counts$gene %in% cage_only_top_genes,"top_in"] = "cage"
+counts[counts$gene %in% tx_only_top_genes,"top_in"] = "tx"
+counts[counts$gene %in% both_top_genes,"top_in"] = "both"
+
+counts = counts %>%
+  melt(id.vars=c("gene", "top_in"), variable.name="sample", value.name="TPM")
+dim(filter(counts, TPM == 0))[1]/dim(counts)[1]
+
+counts_common = counts %>%
+  filter(gene %in% common_genes)
+dim(filter(counts_common, TPM == 0))[1]/dim(counts_common)[1]
+
+counts_tops = counts_common %>%
+  filter(top_in != "None")
+dim(filter(counts_tops, TPM == 0))[1]/dim(counts_tops)[1]
+```
+
+```{r}
+counts$from = "all"
+counts_common$from = "common"
+counts_tops$from = "tops"
+counts_joined = rbind(counts, counts_common, counts_tops)
+
+ggplot(counts_joined, aes(TPM, fill=from, colour=from)) + 
+  geom_density(alpha=0.1) + 
+  scale_x_log10()
+
+dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1]/dim(filter(counts_tops, top_in == "cage"))[1]
+dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1]/dim(filter(counts_tops, top_in == "tx"))[1]
+dim(filter(counts_tops, TPM == 0, top_in == "both"))[1]/dim(filter(counts_tops, top_in == "both"))[1]
+
+ggplot(counts_tops, aes(TPM, fill=top_in, colour=top_in)) + 
+  geom_density(alpha=0.1) + 
+  scale_x_log10()
+```
+
+```{r}
+threshold_tpm = 1
+threshold_frac = 0.05
+
+by_genes = counts_common %>%
+  group_by(gene) %>%
+  summarise(enough_frac = mean(TPM > threshold_tpm), 
+            enough_tpm = quantile(TPM, probs=threshold_frac))
+
+ggplot(by_genes, aes(enough_frac)) + 
+  geom_histogram() + 
+  scale_y_log10()
+
+ggplot(by_genes, aes(enough_tpm)) + 
+  geom_histogram() + 
+  scale_y_log10() + 
+  scale_x_log10()
+
+enough_genes = by_genes$gene[by_genes$enough_tpm >= threshold_tpm]
+length(enough_genes)/length(common_genes)
 ```
 
 ```{r}
