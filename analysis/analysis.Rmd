@@ -37,7 +37,7 @@ set.seed(123)
 col_names = c("gene", "top_phenotype", "total_phenotypes", "variants_tested", "top_variant", "top_variant_chr", "top_variant_start", "p_nominal", "beta", "p_adjusted", "p_adjusted_beta")
 col_types = "cciiccidddd"
 
-bwa_results = read_delim("bwa.permuted.multi.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+bwa_results = read_delim("bwa.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 txrevise_results = read_delim("txrev.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 annots_results = read_delim("txrev_annots_25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 
@@ -63,10 +63,14 @@ genes1 = AnnotationDbi::select(upstream1, keys=keys(upstream1, "GENEID"), keytyp
 genes2 = AnnotationDbi::select(upstream2, keys=keys(upstream2, "GENEID"), keytype="GENEID", columns="GENEID")
 genes1 = unlist(genes1, use.names=FALSE)
 genes2 = unlist(genes2, use.names=FALSE)
+remove(upstream1, upstream2, genes1, genes2)
 
 genes = union(sapply(genes1, fun), sapply(genes2, fun))
-common_genes = intersect(bwa_results$gene, genes)
+common_genes = intersect(bwa_results$gene, genes) 
+# common genetic variants already only used in qtlmap, but bwa_results' 18k > common genes' 15k
 ```
+
+# Filter results
 
 ```{r}
 bwa_results_common = bwa_results[bwa_results$gene %in% common_genes,]
@@ -123,6 +127,8 @@ sum(annots_results$p_adjusted_beta_adjusted < 0.05)
 #  geom_histogram()
 ```
 
+# Analysis
+
 ```{r}
 bwa_tops = bwa_results_common %>%
   filter(p_adjusted_beta_adjusted < 0.05) %>%
@@ -136,8 +142,6 @@ ann_tops = annots_results_common %>%
   filter(p_adjusted_beta_adjusted < 0.05) %>%
   arrange(p_adjusted_beta_adjusted)
 ```
-
-# Analysis
 
 ```{r}
 dim(bwa_results)[1] # BWA total: 19 113
@@ -153,25 +157,27 @@ sum(annots_results$total_phenotypes) - sum(txrevise_results$total_phenotypes) # 
 
 dim(bwa_tops)[1] # BWA tops: 1217
 dim(tx_tops)[1] # txrevise tops: 1086
-dim(ann_tops)[1] # annots tops: [10]  (+) [25] 1068 (-18)
+dim(ann_tops)[1] # annots tops: 1068 (-18)
 
 removed = setdiff(tx_tops$gene, ann_tops$gene)
-length(removed) # annotations removed: [10]  [25] 83
+length(removed) # annotations removed: 83
 added = setdiff(ann_tops$gene, tx_tops$gene)
-length(added) # annotations added: [10]  [25] 65
+length(added) # annotations added: 65
 
 length(intersect(bwa_tops$gene, tx_tops$gene)) # common both tops: 305
-length(intersect(bwa_tops$gene, ann_tops$gene)) # common after tops: [10]  (+) [25] 304 (-1)
+length(intersect(bwa_tops$gene, ann_tops$gene)) # common after tops: 304 (-1)
 
 length(intersect(bwa_tops$top_variant, tx_tops$top_variant)) # 41
-length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # [10]  [25] 43
+length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 43
 ```
 
+# To visualize
 
 ```{r}
 top_variants = rbind(bwa_tops[c("top_variant")], tx_tops[c("top_variant")], ann_tops[c("top_variant")]) %>%
   unique()
 write_delim(top_variants, "variants.txt")
+remove(top_variants)
 
 cage_over_tx = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% #912
   select(gene, top_variant)
@@ -195,8 +201,11 @@ interesting = merge(interesting1, interesting2) %>%
 
 ann_over_cage = ann_tops[ann_tops$gene %in% interesting$gene,] %>%
   select(gene, top_variant)
+remove(interesting, interesting1, interesting2)
 write_tsv(ann_over_cage, "ann_over_cage.tsv")
 ```
+
+# Expression
 
 ```{r}
 counts = read_tsv("../pipeline/txrevise/results/featureCounts/merged_gene_counts.txt") %>%
@@ -204,7 +213,24 @@ counts = read_tsv("../pipeline/txrevise/results/featureCounts/merged_gene_counts
   filter(is.na(third)) %>%
   select(-second, -third)
 
-counts[2:length(counts)] = counts[2:length(counts)] * 1000000 / apply(counts[2:length(counts)], 2, sum)
+gene_metadata = read_tsv("../qtlmap_prep/transcript_usage_Ensembl_96_phenotype_metadata.tsv", col_types="ccccciicccci") %>%
+  mutate(gene_length=gene_end-gene_start) %>%
+  select(gene_id, gene_length) %>%
+  unique()
+
+length(gene_metadata$gene_id) - length(unique(gene_metadata$gene_id)) # 0
+length(intersect(gene_metadata$gene_id, counts$gene)) / length(counts$gene) # 99.3%
+not_found = setdiff(counts$gene, gene_metadata$gene_id)
+counts = counts %>% filter(!(gene %in% not_found))
+
+rownames(gene_metadata) = gene_metadata$gene_id
+gene_lengths = gene_metadata[counts$gene,]$gene_length
+
+# divide by lengths of genes in kilobases, get reads per kilobase
+counts[2:length(counts)] = counts[2:length(counts)] / (gene_lengths / 1000)
+# scale it to per million, get TPM
+scaling_factors = 1000000 / colSums(counts[2:length(counts)])
+counts[2:length(counts)] = sweep(counts[2:length(counts)], 2, scaling_factors, "*")
 
 cage_only_top_genes = cage_over_tx$gene
 tx_only_top_genes = tx_over_cage$gene
@@ -217,15 +243,15 @@ counts[counts$gene %in% both_top_genes,"top_in"] = "both"
 
 counts = counts %>%
   melt(id.vars=c("gene", "top_in"), variable.name="sample", value.name="TPM")
-dim(filter(counts, TPM == 0))[1]/dim(counts)[1]
+dim(filter(counts, TPM == 0))[1] / dim(counts)[1] # 57.1%
 
 counts_common = counts %>%
   filter(gene %in% common_genes)
-dim(filter(counts_common, TPM == 0))[1]/dim(counts_common)[1]
+dim(filter(counts_common, TPM == 0))[1] / dim(counts_common)[1] # 12.4%
 
 counts_tops = counts_common %>%
   filter(top_in != "None")
-dim(filter(counts_tops, TPM == 0))[1]/dim(counts_tops)[1]
+dim(filter(counts_tops, TPM == 0))[1] / dim(counts_tops)[1] # 0.7%
 ```
 
 ```{r}
@@ -234,17 +260,35 @@ counts_common$from = "common"
 counts_tops$from = "tops"
 counts_joined = rbind(counts, counts_common, counts_tops)
 
+dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1] / dim(filter(counts_tops, top_in == "cage"))[1] # 1.0%
+dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.7%
+dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # 0.04%
+```
+
+```{r}
 ggplot(counts_joined, aes(TPM, fill=from, colour=from)) + 
   geom_density(alpha=0.1) + 
   scale_x_log10()
 
-dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1]/dim(filter(counts_tops, top_in == "cage"))[1]
-dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1]/dim(filter(counts_tops, top_in == "tx"))[1]
-dim(filter(counts_tops, TPM == 0, top_in == "both"))[1]/dim(filter(counts_tops, top_in == "both"))[1]
-
-ggplot(counts_tops, aes(TPM, fill=top_in, colour=top_in)) + 
-  geom_density(alpha=0.1) + 
+ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) + 
+  geom_density(alpha=0.2) + 
   scale_x_log10()
+
+ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) + 
+  geom_density(alpha=0.2) + 
+  scale_x_log10(limits=c(0.1, 100))
+
+ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) + 
+  geom_density(alpha=0.2) + 
+  scale_x_log10()
+
+ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) + 
+  geom_density(alpha=0.2) + 
+  scale_x_log10(limits=c(0.1, 100))
+
+ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) + 
+  geom_density(alpha=0.2) + 
+  xlim(c(5, 100))
 ```
 
 ```{r}
@@ -266,8 +310,79 @@ ggplot(by_genes, aes(enough_tpm)) +
   scale_x_log10()
 
 enough_genes = by_genes$gene[by_genes$enough_tpm >= threshold_tpm]
-length(enough_genes)/length(common_genes)
+length(enough_genes)/length(common_genes) # 47.8% (63.9% for 0.1 threshold_tpm)
+common_genes = enough_genes
 ```
+
+Run "Filter results", "Analysis" and "To visualize" again now
+
+# Optimizing annotations' N
+
+```{r}
+transcript_count = c()
+common_transcript_count = c()
+affected_gene_count = c()
+affected_common_gene_count = c()
+
+added = c()
+removed = c()
+net_change = c()
+
+added_in_bwa_tops = c()
+added_in_bwa_tops_frac = c()
+
+Ns = c(10, 25, 50, 100, 200)
+for (N in Ns) {
+  new_transcripts = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcripts_", N, ".rds"))
+  transcript_count = c(transcript_count, length(new_transcripts))
+  common_transcript_count = c(common_transcript_count, sum(sapply(new_transcripts@partitioning@NAMES, fun, 1) %in% common_genes))
+  
+  affected_genes = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcript_genes_", N, ".rds"))
+  affected_gene_count = c(affected_gene_count, length(affected_genes))
+  affected_common_gene_count = c(affected_common_gene_count, length(intersect(affected_genes, common_genes)))
+  
+  trial_results = read_delim(paste0("txrev_annots_", N, ".permuted.txt"), delim="\t", col_types=col_types, col_names=col_names, skip=1)
+  trial_results = trial_results %>%
+    mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
+    filter(kind=="upstream")
+  trial_results_common = trial_results[trial_results$gene %in% common_genes,]
+  trial_results_common$p_adjusted_beta_adjusted = p.adjust(trial_results_common$p_adjusted_beta, method="fdr")
+  trial_results$p_adjusted_beta_adjusted = p.adjust(trial_results$p_adjusted_beta, method="fdr")
+  trial_results = fill_genes(trial_results)
+  trial_results_common = fill_genes(trial_results_common, common=TRUE)
+  trial_tops = trial_results_common %>%
+    filter(p_adjusted_beta_adjusted < 0.05) %>%
+    arrange(p_adjusted_beta_adjusted)
+  
+  added_this = setdiff(trial_tops$gene, tx_tops$gene)
+  added = c(added, length(added_this))
+  removed = c(removed, length(setdiff(tx_tops$gene, trial_tops$gene)))
+  net_change = c(net_change, dim(trial_tops)[1] - dim(tx_tops)[1])
+  
+  added_in_bwa_tops_this = intersect(added_this, bwa_tops$gene)
+  added_in_bwa_tops = c(added_in_bwa_tops, length(added_in_bwa_tops_this))
+  added_in_bwa_tops_frac = c(added_in_bwa_tops_frac, length(added_in_bwa_tops_this) / length(added_this))
+}
+
+metrics = tibble(N=Ns,
+                 transcript_count = transcript_count,
+                 common_transcript_count = common_transcript_count,
+                 affected_gene_count = affected_gene_count,
+                 affected_common_gene_count = affected_common_gene_count,
+                 added = added,
+                 removed = removed,
+                 net_change = net_change,
+                 added_in_bwa_tops = added_in_bwa_tops,
+                 added_in_bwa_tops_frac = added_in_bwa_tops_frac)
+
+melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
+ggplot(melted_metrics, aes(N, value)) + 
+  geom_line() + 
+  geom_point() + 
+  facet_grid(metric ~ ., scales="free_y")
+```
+
+# Visualization
 
 ```{r}
 getgrouping = function(x) {
