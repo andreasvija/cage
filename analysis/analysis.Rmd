@@ -63,9 +63,9 @@ genes1 = AnnotationDbi::select(upstream1, keys=keys(upstream1, "GENEID"), keytyp
 genes2 = AnnotationDbi::select(upstream2, keys=keys(upstream2, "GENEID"), keytype="GENEID", columns="GENEID")
 genes1 = unlist(genes1, use.names=FALSE)
 genes2 = unlist(genes2, use.names=FALSE)
-remove(upstream1, upstream2, genes1, genes2)
-
 genes = union(sapply(genes1, fun), sapply(genes2, fun))
+
+remove(upstream1, upstream2, genes1, genes2)
 common_genes = intersect(bwa_results$gene, genes) 
 # common genetic variants already only used in qtlmap, but bwa_results' 18k > common genes' 15k
 ```
@@ -160,9 +160,9 @@ dim(tx_tops)[1] # txrevise tops: 1086
 dim(ann_tops)[1] # annots tops: 1068 (-18)
 
 removed = setdiff(tx_tops$gene, ann_tops$gene)
-length(removed) # annotations removed: 83
+length(removed) # annotations removed from the top: 83
 added = setdiff(ann_tops$gene, tx_tops$gene)
-length(added) # annotations added: 65
+length(added) # annotations added to the top: 65
 
 length(intersect(bwa_tops$gene, tx_tops$gene)) # common both tops: 305
 length(intersect(bwa_tops$gene, ann_tops$gene)) # common after tops: 304 (-1)
@@ -191,7 +191,7 @@ write_tsv(tx_over_cage, "tx_over_cage.tsv")
 ```{r}
 # which genes and variants were newly significant after new annots but not with cage (false positives?)
 
-interesting1 = bwa_results[bwa_results$gene %in% added,c("gene", "p_adjusted_beta_adjusted")]
+interesting1 = bwa_results[bwa_results$gene %in% added, c("gene", "p_adjusted_beta_adjusted")]
 colnames(interesting1) = c("gene", "p_cage")
 interesting2 = ann_tops[ann_tops$gene %in% added, c("gene", "p_adjusted_beta_adjusted")]
 colnames(interesting2) = c("gene", "p_ann")
@@ -292,25 +292,24 @@ ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
 ```
 
 ```{r}
-threshold_tpm = 1
+threshold_tpm = 0.1
 threshold_frac = 0.05
 
 by_genes = counts_common %>%
   group_by(gene) %>%
-  summarise(enough_frac = mean(TPM > threshold_tpm), 
+  summarise(enough_frac = mean(TPM >= threshold_tpm), 
             enough_tpm = quantile(TPM, probs=threshold_frac))
 
 ggplot(by_genes, aes(enough_frac)) + 
-  geom_histogram() + 
-  scale_y_log10()
+  geom_histogram()
 
 ggplot(by_genes, aes(enough_tpm)) + 
-  geom_histogram() + 
-  scale_y_log10() + 
+  geom_histogram(alpha=0.6) + 
   scale_x_log10()
 
 enough_genes = by_genes$gene[by_genes$enough_tpm >= threshold_tpm]
 length(enough_genes)/length(common_genes) # 47.8% (63.9% for 0.1 threshold_tpm)
+common_genes_prev = common_genes
 common_genes = enough_genes
 ```
 
@@ -324,14 +323,14 @@ common_transcript_count = c()
 affected_gene_count = c()
 affected_common_gene_count = c()
 
-added = c()
-removed = c()
+added_genes = c()
+removed_genes = c()
 net_change = c()
 
 added_in_bwa_tops = c()
-added_in_bwa_tops_frac = c()
+frac_added_in_bwa_tops = c()
 
-Ns = c(10, 25, 50, 100, 200)
+Ns = c(5, 10, 15, 20, 25, 50, 75, 100, 150, 200)
 for (N in Ns) {
   new_transcripts = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcripts_", N, ".rds"))
   transcript_count = c(transcript_count, length(new_transcripts))
@@ -355,25 +354,33 @@ for (N in Ns) {
     arrange(p_adjusted_beta_adjusted)
   
   added_this = setdiff(trial_tops$gene, tx_tops$gene)
-  added = c(added, length(added_this))
-  removed = c(removed, length(setdiff(tx_tops$gene, trial_tops$gene)))
+  added_genes = c(added_genes, length(added_this))
+  removed_genes = c(removed_genes, length(setdiff(tx_tops$gene, trial_tops$gene)))
   net_change = c(net_change, dim(trial_tops)[1] - dim(tx_tops)[1])
   
   added_in_bwa_tops_this = intersect(added_this, bwa_tops$gene)
   added_in_bwa_tops = c(added_in_bwa_tops, length(added_in_bwa_tops_this))
-  added_in_bwa_tops_frac = c(added_in_bwa_tops_frac, length(added_in_bwa_tops_this) / length(added_this))
+  frac_added_in_bwa_tops = c(frac_added_in_bwa_tops, length(added_in_bwa_tops_this) / length(added_this))
 }
 
 metrics = tibble(N=Ns,
                  transcript_count = transcript_count,
                  common_transcript_count = common_transcript_count,
                  affected_gene_count = affected_gene_count,
-                 affected_common_gene_count = affected_common_gene_count,
-                 added = added,
-                 removed = removed,
+                 affected_common_gene_count = affected_common_gene_count)
+
+melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
+ggplot(melted_metrics, aes(N, value)) + 
+  geom_line() + 
+  geom_point() + 
+  facet_grid(metric ~ ., scales="free_y")
+
+metrics = tibble(N=Ns,
+                 added_genes = added_genes,
+                 removed_genes = removed_genes,
                  net_change = net_change,
                  added_in_bwa_tops = added_in_bwa_tops,
-                 added_in_bwa_tops_frac = added_in_bwa_tops_frac)
+                 frac_added_in_bwa_tops = frac_added_in_bwa_tops)
 
 melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
 ggplot(melted_metrics, aes(N, value)) + 

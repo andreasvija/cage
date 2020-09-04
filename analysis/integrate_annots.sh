@@ -41,5 +41,5 @@ source ~/.bashrc
 conda activate snakemake
 OUTPUT=processed/${ANNOTATION}_all_completed.txt
 rm $OUTPUT
-snakemake -ps cage.Snakefile $OUTPUT --cluster ./snakemake_submit_UT.py --jobs 200 --config fill=TRUE Ns="5 10 15 20 25 50 100 200" --use-singularity
+snakemake -ps cage.Snakefile $OUTPUT --cluster ./snakemake_submit_UT.py --jobs 200 --config fill=TRUE Ns="5 10 15 20 25 50 75 100 150 200" --use-singularity
 conda deactivate
