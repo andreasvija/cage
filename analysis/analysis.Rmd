@@ -292,7 +292,7 @@ ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
 ```
 
 ```{r}
-threshold_tpm = 0.1
+threshold_tpm = 1
 threshold_frac = 0.05
 
 by_genes = counts_common %>%

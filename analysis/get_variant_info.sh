@@ -6,8 +6,8 @@
 #SBATCH -c 8
 #SBATCH --mem=32G
 
-gunzip -c /gpfs/hpc/projects/GENCORD/Garieri_2017/Garieri_filtered.no_DS.vcf.gz > temp.vcf
-gunzip -c /gpfs/hpc/projects/genomic_references/GEUVADIS/genotypes/GEUVADIS_GRCh38_filtered.vcf.gz > temp_geuvadis.vcf
+gunzip -c ../qtlmap_prep/cage_common.vcf > temp.vcf
+gunzip -c ../qtlmap_prep/txrevise_common.vcf > temp_geuvadis.vcf
 
 while read VARIANT
 do
