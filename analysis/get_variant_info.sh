@@ -9,6 +9,9 @@
 gunzip -c ../qtlmap_prep/cage_common.vcf > temp.vcf
 gunzip -c ../qtlmap_prep/txrevise_common.vcf > temp_geuvadis.vcf
 
+rm variantinfo.vcf
+rm variantinfo_geuvadis.vcf
+
 while read VARIANT
 do
   cat temp.vcf | grep $VARIANT >> variantinfo.vcf

@@ -2,7 +2,7 @@
 
 #SBATCH -p main
 #SBATCH -J integrate_annots
-#SBATCH -t 23:00:00
+#SBATCH -t 3-00:00:00
 #SBATCH -c 4
 #SBATCH --mem=8G
 
