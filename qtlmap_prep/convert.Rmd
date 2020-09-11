@@ -48,9 +48,9 @@ unmapped_total = sum(unmapped)
 nofeatures_total = sum(nofeatures)
 total = assigned_total + unmapped_total + nofeatures_total
 
-assigned_total / total #  34.0% 46.0%
-unmapped_total / total #   4.8% 0%
-nofeatures_total / total #61.2% 54.0%
+assigned_total / total #  46.0%
+unmapped_total / total #  0%
+nofeatures_total / total #54.0%
 ```
 
 
@@ -110,17 +110,13 @@ ggplot(data=geneCounts, aes(x=geneCount+1e-1)) +
 lower_threshold = 0
 commonGenes = (filter(geneCounts, geneCount > lower_threshold))$gene
 
-length(unique(data$gene))
-length(unique(data$promoter))
+length(unique(data$gene)) # 20 193
+length(unique(data$promoter)) # 93 554
 dim(data)
 data = filter(data, gene %in% commonGenes) 
-length(unique(data$gene))
-length(unique(data$promoter))
+length(unique(data$gene)) # 18 546
+length(unique(data$promoter)) # 90 003
 dim(data)
-# 946 / 20 193 are zeroes (4.7%) (1594 promotors)
-# 1647 / 20 193 are zeroes (8.2%) (1594 promotors)
-# 245 476 / 14 407 316 samples removed (1.7%)
-# 546 854 / 14 407 316 samples removed (3.8%)
 bwa_kept_genes = unique(data$gene)
 
 #calculate promoter proportions

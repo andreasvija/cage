@@ -6,11 +6,14 @@
 #SBATCH -c 8
 #SBATCH --mem=32G
 
-gunzip -c ../qtlmap_prep/cage_common.vcf > temp.vcf
-gunzip -c ../qtlmap_prep/txrevise_common.vcf > temp_geuvadis.vcf
+gunzip -c ../qtlmap_prep/cage_common.vcf.gz > temp.vcf
+gunzip -c ../qtlmap_prep/txrevise_common.vcf.gz > temp_geuvadis.vcf
 
 rm variantinfo.vcf
 rm variantinfo_geuvadis.vcf
+
+cat temp.vcf | grep "#CHROM" >> variantinfo.vcf
+cat temp_geuvadis.vcf | grep "#CHROM" >> variantinfo_geuvadis.vcf
 
 while read VARIANT
 do
