@@ -39,7 +39,7 @@ col_types = "cciiccidddd"
 
 bwa_results = read_delim("bwa.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 txrevise_results = read_delim("txrev.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
-annots_results = read_delim("txrev_annots_25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+annots_results = read_delim("txrev_annots_10.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 
 bwa_results = bwa_results %>%
   mutate(kind="upstream") # for homogeneity's sake
@@ -151,23 +151,15 @@ dim(annots_results)[1] # same
 length(intersect(bwa_results$gene, txrevise_results$gene)) # common total: 15 275
 length(intersect(bwa_results$gene, annots_results$gene)) # same
 
-sum(txrevise_results$total_phenotypes) # 82 835
-sum(annots_results$total_phenotypes) # same
-sum(annots_results$total_phenotypes) - sum(txrevise_results$total_phenotypes) # 0
+sum(txrevise_results$total_phenotypes) # 82 835 (n=10 91 443)
+sum(annots_results$total_phenotypes) # same as first
+sum(annots_results$total_phenotypes) - sum(txrevise_results$total_phenotypes) # 0 (n=10 -8608)
 
 dim(bwa_tops)[1] # BWA tops: 949 (801 with 1Mbp)
-dim(tx_tops)[1] # txrevise tops: 878
-dim(ann_tops)[1] # annots tops: X
+dim(tx_tops)[1] # txrevise tops: 878 (n=10 937)
+dim(ann_tops)[1] # annots (N=10) tops: 941 (n=10 )
 
-removed = setdiff(tx_tops$gene, ann_tops$gene)
-length(removed) # annotations removed from the top: 63
-added = setdiff(ann_tops$gene, tx_tops$gene)
-length(added) # annotations added to the top: 45
-
-length(intersect(bwa_tops$gene, tx_tops$gene)) # common both tops: 280
-length(intersect(bwa_tops$gene, ann_tops$gene)) # common after tops: 270 (-10)
-
-length(intersect(bwa_tops$top_variant, tx_tops$top_variant)) # 41
+length(intersect(bwa_tops$top_variant, tx_tops$top_variant)) # 41  (n=10 44)
 length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 39
 ```
 
@@ -176,25 +168,26 @@ length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 39
 ```{r}
 top_variants = rbind(bwa_tops[c("top_variant")], tx_tops[c("top_variant")], ann_tops[c("top_variant")]) %>%
   unique()
-write_delim(top_variants, "variants.txt")
+#write_delim(top_variants, "variants.txt")
 remove(top_variants)
 
 cage_over_tx = bwa_tops[! bwa_tops$gene %in% tx_tops$gene,] %>% # 669
   select(gene, top_variant)
-write_tsv(cage_over_tx, "cage_over_tx.tsv")
+#write_tsv(cage_over_tx, "cage_over_tx.tsv")
 
 tx_over_cage = tx_tops[! tx_tops$gene %in% bwa_tops$gene,] %>% # 598
   select(gene, top_variant)
-write_tsv(tx_over_cage, "tx_over_cage.tsv")
+#write_tsv(tx_over_cage, "tx_over_cage.tsv")
 ```
 
 ```{r}
 # which genes and variants were newly significant after new annots but not with cage (false positives?)
-
+added = setdiff(ann_tops$gene, tx_tops$gene)
 interesting1 = bwa_results[bwa_results$gene %in% added, c("gene", "p_adjusted_beta_adjusted")]
 colnames(interesting1) = c("gene", "p_cage")
 interesting2 = ann_tops[ann_tops$gene %in% added, c("gene", "p_adjusted_beta_adjusted")]
 colnames(interesting2) = c("gene", "p_ann")
+remove(added)
 
 interesting = merge(interesting1, interesting2) %>%
   filter(p_cage > 0.05, p_ann < 0.05)
@@ -202,7 +195,7 @@ interesting = merge(interesting1, interesting2) %>%
 ann_over_cage = ann_tops[ann_tops$gene %in% interesting$gene,] %>% # 39
   select(gene, top_variant)
 remove(interesting, interesting1, interesting2)
-write_tsv(ann_over_cage, "ann_over_cage.tsv")
+#write_tsv(ann_over_cage, "ann_over_cage.tsv")
 ```
 
 # Expression
@@ -392,6 +385,9 @@ ggplot(melted_metrics, aes(N, value)) +
 # Visualization
 
 ```{r}
+removed = setdiff(tx_tops$gene, ann_tops$gene)
+added = setdiff(ann_tops$gene, tx_tops$gene)
+
 getgrouping = function(x) {
   if (x %in% added) {return("Muutus oluliseks")}
   if (x %in% removed) {return("Kaotas olulisuse")}

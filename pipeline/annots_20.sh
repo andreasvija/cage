@@ -26,7 +26,6 @@ NXF_VER=18.10.1 nextflow \
 	--skip_qc \
 	--skip_multiqc \
 	--skip_stringtie \
-	--saveAlignedIntermediates \
 	--run_txrevise \
 	--txrevise_gffs '../../analysis/txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-20/txrevise_*.gff3' \
 	-resume \
