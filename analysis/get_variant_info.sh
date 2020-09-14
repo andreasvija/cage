@@ -17,9 +17,12 @@ cat temp_geuvadis.vcf | grep "#CHROM" >> variantinfo_geuvadis.vcf
 
 while read VARIANT
 do
+  echo $VARIANT
   cat temp.vcf | grep $VARIANT >> variantinfo.vcf
   cat temp_geuvadis.vcf | grep $VARIANT >> variantinfo_geuvadis.vcf
 done < variants.txt
 
 rm temp.vcf
 rm temp_geuvadis.vcf
+
+echo "Done!"
