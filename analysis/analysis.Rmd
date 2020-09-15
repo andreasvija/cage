@@ -105,8 +105,8 @@ fill_genes <- function(x, common=FALSE) {
   old_genes = unlist(x$gene, use.names=FALSE)
   new_genes = setdiff(gene_source, old_genes)
 
-  additional = data_frame(gene=new_genes, top_phenotype="_", total_phenotypes=0, variants_tested=0, top_variant="_", 
-                          top_variant_chr="_", top_variant_start=1, p_nominal=0.99, beta=1, p_adjusted=0.99, 
+  additional = data_frame(gene=new_genes, top_phenotype="_", total_phenotypes=0, variants_tested=0, top_variant="_",
+                          top_variant_chr="_", top_variant_start=1, p_nominal=0.99, beta=1, p_adjusted=0.99,
                           p_adjusted_beta=0.99, p_adjusted_beta_adjusted=0.99, kind="upstream")
   return(rbind(x, additional))
 }
@@ -224,7 +224,7 @@ remove(interesting, interesting1, interesting2)
 # Expression
 
 ```{r}
-counts = read_tsv("../pipeline/txrevise/results/featureCounts/merged_gene_counts.txt") %>% # 25
+counts = read_tsv("txrev-25_merged_gene_counts.txt") %>%
   tidyr::separate(phenotype_id, c("gene", "second", "third")) %>%
   filter(is.na(third)) %>%
   select(-second, -third)
@@ -282,28 +282,28 @@ dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops
 ```
 
 ```{r}
-ggplot(counts_joined, aes(TPM, fill=from, colour=from)) + 
-  geom_density(alpha=0.1) + 
+ggplot(counts_joined, aes(TPM, fill=from, colour=from)) +
+  geom_density(alpha=0.1) +
   scale_x_log10()
 
-ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) + 
-  geom_density(alpha=0.2) + 
+ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) +
+  geom_density(alpha=0.2) +
   scale_x_log10()
 
-ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) + 
-  geom_density(alpha=0.2) + 
+ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) +
+  geom_density(alpha=0.2) +
   scale_x_log10(limits=c(0.1, 100))
 
-ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) + 
-  geom_density(alpha=0.2) + 
+ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
+  geom_density(alpha=0.2) +
   scale_x_log10()
 
-ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) + 
-  geom_density(alpha=0.2) + 
+ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
+  geom_density(alpha=0.2) +
   scale_x_log10(limits=c(0.1, 100))
 
-ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) + 
-  geom_density(alpha=0.2) + 
+ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
+  geom_density(alpha=0.2) +
   xlim(c(5, 100))
 ```
 
@@ -313,14 +313,14 @@ threshold_frac = 0.05
 
 by_genes = counts_common %>%
   group_by(gene) %>%
-  summarise(enough_frac = mean(TPM >= threshold_tpm), 
+  summarise(enough_frac = mean(TPM >= threshold_tpm),
             enough_tpm = quantile(TPM, probs=threshold_frac))
 
-ggplot(by_genes, aes(enough_frac)) + 
+ggplot(by_genes, aes(enough_frac)) +
   geom_histogram()
 
-ggplot(by_genes, aes(enough_tpm)) + 
-  geom_histogram(alpha=0.6) + 
+ggplot(by_genes, aes(enough_tpm)) +
+  geom_histogram(alpha=0.6) +
   scale_x_log10()
 
 enough_genes = by_genes$gene[by_genes$enough_tpm >= threshold_tpm]
@@ -353,11 +353,11 @@ for (N in Ns) {
   new_transcripts = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcripts_", N, ".rds"))
   transcript_count = c(transcript_count, length(new_transcripts))
   common_transcript_count = c(common_transcript_count, sum(sapply(new_transcripts@partitioning@NAMES, fun, 1) %in% common_genes))
-  
+
   affected_genes = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcript_genes_", N, ".rds"))
   affected_gene_count = c(affected_gene_count, length(affected_genes))
   affected_common_gene_count = c(affected_common_gene_count, length(intersect(affected_genes, common_genes)))
-  
+
   trial_results = read_delim(paste0("txrev_annots_", N, ".permuted.txt"), delim="\t", col_types=col_types, col_names=col_names, skip=1)
   trial_results = trial_results %>%
     mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
@@ -370,12 +370,12 @@ for (N in Ns) {
   trial_tops = trial_results_common %>%
     filter(p_adjusted_beta_adjusted < 0.05) %>%
     arrange(p_adjusted_beta_adjusted)
-  
+
   added_this = setdiff(trial_tops$gene, compare_tx_tops$gene)
   added_genes = c(added_genes, length(added_this))
   removed_genes = c(removed_genes, length(setdiff(compare_tx_tops$gene, trial_tops$gene)))
   net_change = c(net_change, dim(trial_tops)[1] - dim(compare_tx_tops)[1])
-  
+
   added_in_bwa_tops_this = intersect(added_this, bwa_tops$gene)
   added_in_bwa_tops = c(added_in_bwa_tops, length(added_in_bwa_tops_this))
   frac_added_in_bwa_tops = c(frac_added_in_bwa_tops, length(added_in_bwa_tops_this) / length(added_this))
@@ -388,9 +388,9 @@ metrics = tibble(N=Ns,
                  affected_common_gene_count = affected_common_gene_count)
 
 melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
-ggplot(melted_metrics, aes(N, value)) + 
-  geom_line() + 
-  geom_point() + 
+ggplot(melted_metrics, aes(N, value)) +
+  geom_line() +
+  geom_point() +
   facet_grid(metric ~ ., scales="free_y")
 
 metrics = tibble(N=Ns,
@@ -401,9 +401,9 @@ metrics = tibble(N=Ns,
                  frac_added_in_bwa_tops = frac_added_in_bwa_tops)
 
 melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
-ggplot(melted_metrics, aes(N, value)) + 
-  geom_line() + 
-  geom_point() + 
+ggplot(melted_metrics, aes(N, value)) +
+  geom_line() +
+  geom_point() +
   facet_grid(metric ~ ., scales="free_y")
 ```
 

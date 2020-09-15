@@ -55,3 +55,4 @@ nextflow \
 	-resume
 
 gunzip results/sumstats/txrevise.permuted.txt.gz -c > ../../analysis/txrev.permuted.txt
+cp results/featureCounts/merged_gene_counts.txt ../../analysis/txrev-25_merged_gene_counts.txt
