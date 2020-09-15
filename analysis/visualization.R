@@ -177,7 +177,8 @@ temp = tryCatch({
 
   combo = plot_grid(a[[1]], b[[1]], b[[2]], ncol=1, nrow=3, align="v")
 
-  ggsave(paste0("plots/", opt$kind, "/", n, "_", observed_gene, ".pdf"), combo)
+  padded_n = sprintf("%04d", n)
+  ggsave(paste0("plots/", opt$kind, "/", padded_n, "_", observed_gene, ".pdf"), combo)
 
 }, error = function(e){print(e)})
 }
