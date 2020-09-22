@@ -2,7 +2,7 @@
 #screen, ssh stage1
 
 #SBATCH -p main
-#SBATCH -J annots_pipeline
+#SBATCH -J annots_pipeline_25
 #SBATCH -t 24:00:00
 #SBATCH -c 8
 #SBATCH --mem=24G

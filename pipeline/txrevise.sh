@@ -54,5 +54,5 @@ nextflow \
 	--varid_rsid_map_file /gpfs/hpc/projects/genomic_references/annotations/eQTLCatalogue/v0.1/dbSNP_b151_GRCh38p7_splitted_var_rsid.vcf.gz \
 	-resume
 
-gunzip results/sumstats/txrevise.permuted.txt.gz -c > ../../analysis/txrev.permuted.txt
+gunzip results/sumstats/txrevise.permuted.txt.gz -c > ../../analysis/txrev-25.permuted.txt
 cp results/featureCounts/merged_gene_counts.txt ../../analysis/txrev-25_merged_gene_counts.txt
