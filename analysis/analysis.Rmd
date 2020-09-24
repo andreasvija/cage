@@ -38,8 +38,8 @@ col_names = c("gene", "top_phenotype", "total_phenotypes", "variants_tested", "t
 col_types = "cciiccidddd"
 
 bwa_results = read_delim("bwa.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
-txrevise10_results = read_delim("txrev.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
-txrevise25_results = read_delim("txrev_25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+#txrevise10_results = read_delim("txrev-10.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
+txrevise25_results = read_delim("txrev-25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 annots_results = read_delim("txrev_annots_10.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 
 bwa_results = bwa_results %>%
@@ -47,9 +47,9 @@ bwa_results = bwa_results %>%
 fun = function(x, n=1) {
   return(strsplit(x, ".", fixed=TRUE)[[1]][n])
 }
-txrevise10_results = txrevise10_results %>%
-  mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
-  filter(kind=="upstream")
+#txrevise10_results = txrevise10_results %>%
+#  mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
+#  filter(kind=="upstream")
 txrevise25_results = txrevise25_results %>%
   mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
   filter(kind=="upstream")
@@ -78,20 +78,20 @@ common_genes = intersect(bwa_results$gene, genes)
 
 ```{r}
 bwa_results_common = bwa_results[bwa_results$gene %in% common_genes,]
-txrevise10_results_common = txrevise10_results[txrevise10_results$gene %in% common_genes,]
+#txrevise10_results_common = txrevise10_results[txrevise10_results$gene %in% common_genes,]
 txrevise25_results_common = txrevise25_results[txrevise25_results$gene %in% common_genes,]
 annots_results_common = annots_results[annots_results$gene %in% common_genes,]
 ```
 
 ```{r}
 bwa_results_common$p_adjusted_beta_adjusted = p.adjust(bwa_results_common$p_adjusted_beta, method="fdr")
-txrevise10_results_common$p_adjusted_beta_adjusted = p.adjust(txrevise10_results_common$p_adjusted_beta, method="fdr")
+#txrevise10_results_common$p_adjusted_beta_adjusted = p.adjust(txrevise10_results_common$p_adjusted_beta, method="fdr")
 txrevise25_results_common$p_adjusted_beta_adjusted = p.adjust(txrevise25_results_common$p_adjusted_beta, method="fdr")
 annots_results_common$p_adjusted_beta_adjusted = p.adjust(annots_results_common$p_adjusted_beta, method="fdr")
 
 # just to keep a consistent shape
 bwa_results$p_adjusted_beta_adjusted = p.adjust(bwa_results$p_adjusted_beta, method="fdr")
-txrevise10_results$p_adjusted_beta_adjusted = p.adjust(txrevise10_results$p_adjusted_beta, method="fdr")
+#txrevise10_results$p_adjusted_beta_adjusted = p.adjust(txrevise10_results$p_adjusted_beta, method="fdr")
 txrevise25_results$p_adjusted_beta_adjusted = p.adjust(txrevise25_results$p_adjusted_beta, method="fdr")
 annots_results$p_adjusted_beta_adjusted = p.adjust(annots_results$p_adjusted_beta, method="fdr")
 ```
@@ -111,8 +111,8 @@ fill_genes <- function(x, common=FALSE) {
   return(rbind(x, additional))
 }
 
-txrevise10_results = fill_genes(txrevise10_results)
-txrevise10_results_common = fill_genes(txrevise10_results_common, common=TRUE)
+#txrevise10_results = fill_genes(txrevise10_results)
+#txrevise10_results_common = fill_genes(txrevise10_results_common, common=TRUE)
 txrevise25_results = fill_genes(txrevise25_results)
 txrevise25_results_common = fill_genes(txrevise25_results_common, common=TRUE)
 annots_results = fill_genes(annots_results)
@@ -124,9 +124,9 @@ ggplot(mapping=aes(x=bwa_results$p_adjusted_beta_adjusted)) +
   geom_histogram()
 sum(bwa_results$p_adjusted_beta_adjusted < 0.05)
 
-ggplot(mapping=aes(x=txrevise10_results$p_adjusted_beta_adjusted)) +
-  geom_histogram()
-sum(txrevise10_results$p_adjusted_beta_adjusted < 0.05)
+#ggplot(mapping=aes(x=txrevise10_results$p_adjusted_beta_adjusted)) +
+#  geom_histogram()
+#sum(txrevise10_results$p_adjusted_beta_adjusted < 0.05)
 
 ggplot(mapping=aes(x=txrevise25_results$p_adjusted_beta_adjusted)) +
   geom_histogram()
@@ -147,9 +147,9 @@ bwa_tops = bwa_results_common %>%
   filter(p_adjusted_beta_adjusted < 0.05) %>%
   arrange(p_adjusted_beta_adjusted)
 
-tx10_tops = txrevise10_results_common %>%
-  filter(p_adjusted_beta_adjusted < 0.05) %>%
-  arrange(p_adjusted_beta_adjusted)
+#tx10_tops = txrevise10_results_common %>%
+#  filter(p_adjusted_beta_adjusted < 0.05) %>%
+#  arrange(p_adjusted_beta_adjusted)
 
 tx25_tops = txrevise25_results_common %>%
   filter(p_adjusted_beta_adjusted < 0.05) %>%
@@ -163,27 +163,27 @@ ann_tops = annots_results_common %>%
 ```{r}
 dim(bwa_results)[1] # BWA total: 18 432
 sum(bwa_results$total_phenotypes) # BWA promotor total: 89 594 (pre-qtlmap number bigger cause genes with not enough variants discarded?)
-dim(txrevise10_results)[1] # txrevise total: 20 176
+#dim(txrevise10_results)[1] # txrevise total: 20 176
 dim(txrevise25_results)[1] # same
 dim(annots_results)[1] # same
-length(intersect(bwa_results$gene, txrevise10_results$gene)) # common total: 15 275
+#length(intersect(bwa_results$gene, txrevise10_results$gene)) # common total: 15 275
 length(intersect(bwa_results$gene, txrevise25_results$gene)) # same
 length(intersect(bwa_results$gene, annots_results$gene)) # same
 
-sum(txrevise10_results$total_phenotypes) # 83 344
+#sum(txrevise10_results$total_phenotypes) # 83 344
 sum(txrevise25_results$total_phenotypes) # 74 736
-sum(annots_results$total_phenotypes) # 83 344
-sum(annots_results$total_phenotypes) - sum(txrevise10_results$total_phenotypes) # 0
-sum(annots_results$total_phenotypes) - sum(txrevise25_results$total_phenotypes) # -8608
+sum(annots_results$total_phenotypes) # 132 555
+#sum(annots_results$total_phenotypes) - sum(txrevise10_results$total_phenotypes) # 0
+sum(annots_results$total_phenotypes) - sum(txrevise25_results$total_phenotypes) # 57 819
 
-dim(bwa_tops)[1] # BWA tops: 949 (801 with 1Mbp)
-dim(tx10_tops)[1] # txrevise10 tops: 937
-dim(tx25_tops)[1] # txrevise25 tops: 878
-dim(ann_tops)[1] # (N=10) annots tops: 941
+dim(bwa_tops)[1] # BWA tops: 949
+#dim(tx10_tops)[1] # txrevise10 tops: 937
+dim(tx25_tops)[1] # txrevise25 tops: 866
+dim(ann_tops)[1] # annots10 tops: 1150
 
-length(intersect(bwa_tops$top_variant, tx10_tops$top_variant)) # 44
-length(intersect(bwa_tops$top_variant, tx25_tops$top_variant)) # 41
-length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 42
+#length(intersect(bwa_tops$top_variant, tx10_tops$top_variant)) # 44
+length(intersect(bwa_tops$top_variant, tx25_tops$top_variant)) # 43
+length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 48
 ```
 
 # To visualize
@@ -277,8 +277,8 @@ counts_tops$from = "tops"
 counts_joined = rbind(counts, counts_common, counts_tops)
 
 dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1] / dim(filter(counts_tops, top_in == "cage"))[1] # 1.0%
-dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.7%
-dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # 0.04%
+dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.6%
+dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # 0.01%
 ```
 
 ```{r}
@@ -334,7 +334,7 @@ Run "Filter results", "Analysis" and "To visualize" again now
 # Optimizing annotations' N
 
 ```{r}
-compare_tx_tops = tx10_tops
+compare_tx_tops = tx25_tops
 
 transcript_count = c()
 common_transcript_count = c()
@@ -348,7 +348,7 @@ net_change = c()
 added_in_bwa_tops = c()
 frac_added_in_bwa_tops = c()
 
-Ns = c(5, 10, 15, 20, 25, 50, 75, 100, 150, 200)
+Ns = c(5, 10, 15, 20)#, 25, 50, 75, 100, 150, 200)
 for (N in Ns) {
   new_transcripts = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcripts_", N, ".rds"))
   transcript_count = c(transcript_count, length(new_transcripts))
@@ -456,7 +456,7 @@ fig3 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(ann_p), color=grouping)) 
 
 
 
-
+'
 comparison = merge(select(txrevise10_results, gene, p_adjusted_beta_adjusted),
                    select(annots_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
@@ -479,7 +479,7 @@ comparison = arrange(comparison, grouping)
 fig5 = ggplot(comparison, aes(x=-log10(tx10_p), y=-log10(tx25_p), color=grouping)) +
   labs(x="txrevise 10 -log10(p)", y="txrevise 25 -log10(p)", color="Olulisus") +
   geom_smooth(aes(x=-log10(tx10_p), y=-log10(tx25_p)), inherit.aes=FALSE, method="lm")
-
+'
 
 
 
