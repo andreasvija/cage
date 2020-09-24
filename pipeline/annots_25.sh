@@ -11,8 +11,8 @@ module load java-1.8.0_40
 module load singularity
 module load nextflow
 
-mkdir annots
-cd annots
+mkdir annots_25
+cd annots_25
 
 git clone https://github.com/eQTL-Catalogue/rnaseq
 git clone https://github.com/eQTL-Catalogue/qcnorm
