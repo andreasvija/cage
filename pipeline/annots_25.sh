@@ -47,7 +47,7 @@ nextflow \
 ../../nextflow/nextflow \
 	run qtlmap/main.nf \
 	-profile tartu_hpc \
-	--studyFile ../sources_annots.tsv \
+	--studyFile ../sources_annots_25.tsv \
 	--cis_window 200000 \
 	--run_permutation true \
 	--is_imputed FALSE \
