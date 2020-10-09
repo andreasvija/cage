@@ -38,7 +38,6 @@ col_names = c("gene", "top_phenotype", "total_phenotypes", "variants_tested", "t
 col_types = "cciiccidddd"
 
 bwa_results = read_delim("bwa.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
-#txrevise10_results = read_delim("txrev-10.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 txrevise25_results = read_delim("txrev-25.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 annots_results = read_delim("txrev_annots_20.permuted.txt", delim="\t", col_types=col_types, col_names=col_names, skip=1)
 
@@ -47,9 +46,6 @@ bwa_results = bwa_results %>%
 fun = function(x, n=1) {
   return(strsplit(x, ".", fixed=TRUE)[[1]][n])
 }
-#txrevise10_results = txrevise10_results %>%
-#  mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
-#  filter(kind=="upstream")
 txrevise25_results = txrevise25_results %>%
   mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
   filter(kind=="upstream")
@@ -78,20 +74,17 @@ common_genes = intersect(bwa_results$gene, genes)
 
 ```{r}
 bwa_results_common = bwa_results[bwa_results$gene %in% common_genes,]
-#txrevise10_results_common = txrevise10_results[txrevise10_results$gene %in% common_genes,]
 txrevise25_results_common = txrevise25_results[txrevise25_results$gene %in% common_genes,]
 annots_results_common = annots_results[annots_results$gene %in% common_genes,]
 ```
 
 ```{r}
 bwa_results_common$p_adjusted_beta_adjusted = p.adjust(bwa_results_common$p_adjusted_beta, method="fdr")
-#txrevise10_results_common$p_adjusted_beta_adjusted = p.adjust(txrevise10_results_common$p_adjusted_beta, method="fdr")
 txrevise25_results_common$p_adjusted_beta_adjusted = p.adjust(txrevise25_results_common$p_adjusted_beta, method="fdr")
 annots_results_common$p_adjusted_beta_adjusted = p.adjust(annots_results_common$p_adjusted_beta, method="fdr")
 
 # just to keep a consistent shape
 bwa_results$p_adjusted_beta_adjusted = p.adjust(bwa_results$p_adjusted_beta, method="fdr")
-#txrevise10_results$p_adjusted_beta_adjusted = p.adjust(txrevise10_results$p_adjusted_beta, method="fdr")
 txrevise25_results$p_adjusted_beta_adjusted = p.adjust(txrevise25_results$p_adjusted_beta, method="fdr")
 annots_results$p_adjusted_beta_adjusted = p.adjust(annots_results$p_adjusted_beta, method="fdr")
 ```
@@ -111,8 +104,6 @@ fill_genes <- function(x, common=FALSE) {
   return(rbind(x, additional))
 }
 
-#txrevise10_results = fill_genes(txrevise10_results)
-#txrevise10_results_common = fill_genes(txrevise10_results_common, common=TRUE)
 txrevise25_results = fill_genes(txrevise25_results)
 txrevise25_results_common = fill_genes(txrevise25_results_common, common=TRUE)
 annots_results = fill_genes(annots_results)
@@ -122,19 +113,12 @@ annots_results_common = fill_genes(annots_results_common, common=TRUE)
 ```{r}
 ggplot(mapping=aes(x=bwa_results$p_adjusted_beta_adjusted)) +
   geom_histogram()
-sum(bwa_results$p_adjusted_beta_adjusted < 0.05)
-
-#ggplot(mapping=aes(x=txrevise10_results$p_adjusted_beta_adjusted)) +
-#  geom_histogram()
-#sum(txrevise10_results$p_adjusted_beta_adjusted < 0.05)
 
 ggplot(mapping=aes(x=txrevise25_results$p_adjusted_beta_adjusted)) +
   geom_histogram()
-sum(txrevise25_results$p_adjusted_beta_adjusted < 0.05)
 
 ggplot(mapping=aes(x=annots_results$p_adjusted_beta_adjusted)) +
   geom_histogram()
-sum(annots_results$p_adjusted_beta_adjusted < 0.05)
 
 #ggplot(mapping=aes(x=abs(bwa_results$variant_distance[bwa_results$p_adjusted_beta_adjusted < 0.05]))) +
 #  geom_histogram()
@@ -146,10 +130,6 @@ sum(annots_results$p_adjusted_beta_adjusted < 0.05)
 bwa_tops = bwa_results_common %>%
   filter(p_adjusted_beta_adjusted < 0.05) %>%
   arrange(p_adjusted_beta_adjusted)
-
-#tx10_tops = txrevise10_results_common %>%
-#  filter(p_adjusted_beta_adjusted < 0.05) %>%
-#  arrange(p_adjusted_beta_adjusted)
 
 tx25_tops = txrevise25_results_common %>%
   filter(p_adjusted_beta_adjusted < 0.05) %>%
@@ -163,25 +143,24 @@ ann_tops = annots_results_common %>%
 ```{r}
 dim(bwa_results)[1] # BWA total: 18 432
 sum(bwa_results$total_phenotypes) # BWA promotor total: 89 594 (pre-qtlmap number bigger cause genes with not enough variants discarded?)
-#dim(txrevise10_results)[1] # txrevise total: 20 176
-dim(txrevise25_results)[1] # same
+dim(txrevise25_results)[1] # 20 176
 dim(annots_results)[1] # same
-#length(intersect(bwa_results$gene, txrevise10_results$gene)) # common total: 15 275
-length(intersect(bwa_results$gene, txrevise25_results$gene)) # same
+length(intersect(bwa_results$gene, txrevise25_results$gene)) # 15 275
 length(intersect(bwa_results$gene, annots_results$gene)) # same
 
-#sum(txrevise10_results$total_phenotypes) # 83 344
 sum(txrevise25_results$total_phenotypes) # 74 736
 sum(annots_results$total_phenotypes) # 117 301
-#sum(annots_results$total_phenotypes) - sum(txrevise10_results$total_phenotypes) # 0
 sum(annots_results$total_phenotypes) - sum(txrevise25_results$total_phenotypes) # 42 565
 
 dim(bwa_tops)[1] # BWA tops: 949
-#dim(tx10_tops)[1] # txrevise10 tops: 937
 dim(tx25_tops)[1] # txrevise25 tops: 866
 dim(ann_tops)[1] # annots10 tops: 1118
+(dim(ann_tops)[1] - dim(tx25_tops)[1]) / dim(tx25_tops)[1] # 29.1%
 
-#length(intersect(bwa_tops$top_variant, tx10_tops$top_variant)) # 44
+length(intersect(bwa_tops$gene, tx25_tops$gene)) # 280
+length(intersect(bwa_tops$gene, ann_tops$gene)) # 353
+length(intersect(tx25_tops$gene, ann_tops$gene)) # 730
+
 length(intersect(bwa_tops$top_variant, tx25_tops$top_variant)) # 43
 length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 47
 ```
@@ -221,6 +200,84 @@ remove(interesting, interesting1, interesting2)
 #write_tsv(ann_over_cage, "ann_over_cage.tsv")
 ```
 
+# Optimizing annotations' N
+
+```{r}
+compare_tx_tops = tx25_tops
+
+transcript_count = c()
+common_transcript_count = c()
+affected_gene_count = c()
+affected_common_gene_count = c()
+
+added_genes = c()
+removed_genes = c()
+net_increase = c()
+
+added_in_bwa_tops = c()
+frac_added_in_bwa_tops = c()
+
+Ns = c(5, 10, 15, 20, 25, 50, 75, 100, 150, 200)
+for (N in Ns) {
+  new_transcripts = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcripts_", N, ".rds"))
+  transcript_count = c(transcript_count, length(new_transcripts))
+  common_transcript_count = c(common_transcript_count, sum(sapply(new_transcripts@partitioning@NAMES, fun, 1) %in% common_genes))
+
+  affected_genes = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcript_genes_", N, ".rds"))
+  affected_gene_count = c(affected_gene_count, length(affected_genes))
+  affected_common_gene_count = c(affected_common_gene_count, length(intersect(affected_genes, common_genes)))
+
+  trial_results = read_delim(paste0("txrev_annots_", N, ".permuted.txt"), delim="\t", col_types=col_types, col_names=col_names, skip=1)
+  trial_results = trial_results %>%
+    mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
+    filter(kind=="upstream")
+  trial_results_common = trial_results[trial_results$gene %in% common_genes,]
+  trial_results_common$p_adjusted_beta_adjusted = p.adjust(trial_results_common$p_adjusted_beta, method="fdr")
+  trial_results$p_adjusted_beta_adjusted = p.adjust(trial_results$p_adjusted_beta, method="fdr")
+  trial_results = fill_genes(trial_results)
+  trial_results_common = fill_genes(trial_results_common, common=TRUE)
+  trial_tops = trial_results_common %>%
+    filter(p_adjusted_beta_adjusted < 0.05) %>%
+    arrange(p_adjusted_beta_adjusted)
+
+  added_this = setdiff(trial_tops$gene, compare_tx_tops$gene)
+  added_genes = c(added_genes, length(added_this))
+  removed_genes = c(removed_genes, length(setdiff(compare_tx_tops$gene, trial_tops$gene)))
+  net_increase = c(net_increase, dim(trial_tops)[1] - dim(compare_tx_tops)[1])
+
+  added_in_bwa_tops_this = intersect(added_this, bwa_tops$gene)
+  added_in_bwa_tops = c(added_in_bwa_tops, length(added_in_bwa_tops_this))
+  frac_added_in_bwa_tops = c(frac_added_in_bwa_tops, length(added_in_bwa_tops_this) / length(added_this))
+}
+
+metrics = tibble(N=Ns,
+                 transcript_count = transcript_count,
+                 common_transcript_count = common_transcript_count,
+                 affected_gene_count = affected_gene_count,
+                 affected_common_gene_count = affected_common_gene_count)
+
+melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
+ggplot(melted_metrics, aes(N, value)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(metric ~ ., scales="free_y") +
+  scale_x_continuous(breaks=Ns)
+
+metrics = tibble(N=Ns,
+                 added_genes = added_genes,
+                 removed_genes = removed_genes,
+                 net_increase = net_increase,
+                 added_in_bwa_tops = added_in_bwa_tops,
+                 frac_added_in_bwa_tops = frac_added_in_bwa_tops)
+
+melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
+ggplot(melted_metrics, aes(N, value)) +
+  geom_line() +
+  geom_point() +
+  facet_grid(metric ~ ., scales="free_y") +
+  scale_x_continuous(breaks=Ns)
+```
+
 # Expression
 
 ```{r}
@@ -247,7 +304,9 @@ counts[2:length(counts)] = counts[2:length(counts)] / (gene_lengths / 1000)
 # scale it to per million, get TPM
 scaling_factors = 1000000 / colSums(counts[2:length(counts)])
 counts[2:length(counts)] = sweep(counts[2:length(counts)], 2, scaling_factors, "*")
+```
 
+```{r}
 cage_only_top_genes = cage_over_tx$gene
 tx_only_top_genes = tx_over_cage$gene
 both_top_genes = intersect(bwa_tops$gene, tx25_tops$gene)
@@ -274,37 +333,27 @@ dim(filter(counts_tops, TPM == 0))[1] / dim(counts_tops)[1] # 0.7%
 counts$from = "all"
 counts_common$from = "common"
 counts_tops$from = "tops"
+
 counts_joined = rbind(counts, counts_common, counts_tops)
-
-dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1] / dim(filter(counts_tops, top_in == "cage"))[1] # 1.0%
-dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.6%
-dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # 0.01%
-```
-
-```{r}
+remove(counts)
 ggplot(counts_joined, aes(TPM, fill=from, colour=from)) +
   geom_density(alpha=0.1) +
   scale_x_log10()
+remove(counts_joined)
+```
 
-ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) +
-  geom_density(alpha=0.2) +
-  scale_x_log10()
-
-ggplot(counts_tops, aes(x=TPM, fill=top_in, colour=top_in)) +
-  geom_density(alpha=0.2) +
-  scale_x_log10(limits=c(0.1, 100))
-
-ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
-  geom_density(alpha=0.2) +
-  scale_x_log10()
+```{r}
+dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1] / dim(filter(counts_tops, top_in == "cage"))[1] # 1.0%
+dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.6%
+dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # 0.01%
 
 ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
   geom_density(alpha=0.2) +
-  scale_x_log10(limits=c(0.1, 100))
+  scale_x_log10(limits=c(0.01, 1000), breaks=c(0.01, 0.1, 1, 10, 100, 1000))
 
 ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
   geom_density(alpha=0.2) +
-  xlim(c(5, 100))
+  scale_x_log10(limits=c(1, 1000), breaks=c(1, 10, 100, 1000))
 ```
 
 ```{r}
@@ -314,14 +363,14 @@ threshold_frac = 0.05
 by_genes = counts_common %>%
   group_by(gene) %>%
   summarise(enough_frac = mean(TPM >= threshold_tpm),
-            enough_tpm = quantile(TPM, probs=threshold_frac))
+            enough_tpm = quantile(TPM, probs=1-threshold_frac))
 
 ggplot(by_genes, aes(enough_frac)) +
   geom_histogram()
 
 ggplot(by_genes, aes(enough_tpm)) +
   geom_histogram(alpha=0.6) +
-  scale_x_log10()
+  scale_x_log10(breaks=c(0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000))
 
 enough_genes = by_genes$gene[by_genes$enough_tpm >= threshold_tpm]
 length(enough_genes)/length(common_genes) # 47.8% (63.9% for 0.1 threshold_tpm)
@@ -329,85 +378,7 @@ common_genes_prev = common_genes
 common_genes = enough_genes
 ```
 
-Run "Filter results", "Analysis" and "To visualize" again now
-
-# Optimizing annotations' N
-
-```{r}
-compare_tx_tops = tx25_tops
-
-transcript_count = c()
-common_transcript_count = c()
-affected_gene_count = c()
-affected_common_gene_count = c()
-
-added_genes = c()
-removed_genes = c()
-net_change = c()
-
-added_in_bwa_tops = c()
-frac_added_in_bwa_tops = c()
-
-Ns = c(5, 10, 15, 20, 25, 50, 75, 100, 150)#, 200)
-for (N in Ns) {
-  new_transcripts = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcripts_", N, ".rds"))
-  transcript_count = c(transcript_count, length(new_transcripts))
-  common_transcript_count = c(common_transcript_count, sum(sapply(new_transcripts@partitioning@NAMES, fun, 1) %in% common_genes))
-
-  affected_genes = readRDS(paste0("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-", N, "/new_transcript_genes_", N, ".rds"))
-  affected_gene_count = c(affected_gene_count, length(affected_genes))
-  affected_common_gene_count = c(affected_common_gene_count, length(intersect(affected_genes, common_genes)))
-
-  trial_results = read_delim(paste0("txrev_annots_", N, ".permuted.txt"), delim="\t", col_types=col_types, col_names=col_names, skip=1)
-  trial_results = trial_results %>%
-    mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
-    filter(kind=="upstream")
-  trial_results_common = trial_results[trial_results$gene %in% common_genes,]
-  trial_results_common$p_adjusted_beta_adjusted = p.adjust(trial_results_common$p_adjusted_beta, method="fdr")
-  trial_results$p_adjusted_beta_adjusted = p.adjust(trial_results$p_adjusted_beta, method="fdr")
-  trial_results = fill_genes(trial_results)
-  trial_results_common = fill_genes(trial_results_common, common=TRUE)
-  trial_tops = trial_results_common %>%
-    filter(p_adjusted_beta_adjusted < 0.05) %>%
-    arrange(p_adjusted_beta_adjusted)
-
-  added_this = setdiff(trial_tops$gene, compare_tx_tops$gene)
-  added_genes = c(added_genes, length(added_this))
-  removed_genes = c(removed_genes, length(setdiff(compare_tx_tops$gene, trial_tops$gene)))
-  net_change = c(net_change, dim(trial_tops)[1] - dim(compare_tx_tops)[1])
-
-  added_in_bwa_tops_this = intersect(added_this, bwa_tops$gene)
-  added_in_bwa_tops = c(added_in_bwa_tops, length(added_in_bwa_tops_this))
-  frac_added_in_bwa_tops = c(frac_added_in_bwa_tops, length(added_in_bwa_tops_this) / length(added_this))
-}
-
-metrics = tibble(N=Ns,
-                 transcript_count = transcript_count,
-                 common_transcript_count = common_transcript_count,
-                 affected_gene_count = affected_gene_count,
-                 affected_common_gene_count = affected_common_gene_count)
-
-melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
-ggplot(melted_metrics, aes(N, value)) +
-  geom_line() +
-  geom_point() +
-  facet_grid(metric ~ ., scales="free_y") +
-  scale_x_continuous(breaks=Ns)
-
-metrics = tibble(N=Ns,
-                 added_genes = added_genes,
-                 removed_genes = removed_genes,
-                 net_change = net_change,
-                 added_in_bwa_tops = added_in_bwa_tops,
-                 frac_added_in_bwa_tops = frac_added_in_bwa_tops)
-
-melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
-ggplot(melted_metrics, aes(N, value)) +
-  geom_line() +
-  geom_point() +
-  facet_grid(metric ~ ., scales="free_y") +
-  scale_x_continuous(breaks=Ns)
-```
+Run "Filter results", "Analysis", "To visualize" and "Optimizing annotations' N" again now
 
 # Visualization
 
@@ -457,35 +428,7 @@ fig3 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(ann_p), color=grouping)) 
   geom_smooth(aes(x=-log10(tx_p), y=-log10(ann_p)), inherit.aes=FALSE, method="lm")
 
 
-
-'
-comparison = merge(select(txrevise10_results, gene, p_adjusted_beta_adjusted),
-                   select(annots_results, gene, p_adjusted_beta_adjusted),
-                   by="gene")
-colnames(comparison) = c("gene", "tx10_p", "ann_p")
-comparison$grouping = "N/A"
-comparison = arrange(comparison, grouping)
-
-fig4 = ggplot(comparison, aes(x=-log10(tx10_p), y=-log10(ann_p), color=grouping)) +
-  labs(x="txrevise 10 -log10(p)", y="txrevise 25 + cage 10 -log10(p)", color="Olulisus") +
-  geom_smooth(aes(x=-log10(tx10_p), y=-log10(ann_p)), inherit.aes=FALSE, method="lm")
-
-
-comparison = merge(select(txrevise10_results, gene, p_adjusted_beta_adjusted),
-                   select(txrevise25_results, gene, p_adjusted_beta_adjusted),
-                   by="gene")
-colnames(comparison) = c("gene", "tx10_p", "tx25_p")
-comparison$grouping = "N/A"
-comparison = arrange(comparison, grouping)
-
-fig5 = ggplot(comparison, aes(x=-log10(tx10_p), y=-log10(tx25_p), color=grouping)) +
-  labs(x="txrevise 10 -log10(p)", y="txrevise 25 -log10(p)", color="Olulisus") +
-  geom_smooth(aes(x=-log10(tx10_p), y=-log10(tx25_p)), inherit.aes=FALSE, method="lm")
-'
-
-
-
-for (fig in list(fig1, fig2, fig3, fig4, fig5)) {
+for (fig in list(fig1, fig2, fig3)) {
   print(fig +
           geom_segment(x=0, y=0, xend=120, yend=120, color="black") +
           geom_point(aes(color=grouping), alpha=0.4) +
