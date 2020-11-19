@@ -2,7 +2,7 @@
 
 #SBATCH -p main
 #SBATCH -J get_variant_info
-#SBATCH -t 24:00:00
+#SBATCH -t 2-00:00:00
 #SBATCH -c 8
 #SBATCH --mem=32G
 
