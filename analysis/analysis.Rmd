@@ -164,20 +164,20 @@ length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 56
 ```{r}
 top_variants = rbind(bwa_tops[c("top_variant")], tx25_tops[c("top_variant")], ann_tops[c("top_variant")]) %>%
   unique() # 2774
-write_delim(top_variants, "variants.txt")
+#write_delim(top_variants, "variants.txt")
 remove(top_variants)
 
 cage_over_tx = bwa_tops[! bwa_tops$gene %in% tx25_tops$gene,] %>% # 838
   select(gene, top_variant)
-write_tsv(cage_over_tx, "cage_over_tx.tsv")
+#write_tsv(cage_over_tx, "cage_over_tx.tsv")
 
 tx_and_cage = bwa_tops[bwa_tops$gene %in% tx25_tops$gene,] %>% # 307
   select(gene, top_variant)
-write_tsv(tx_and_cage, "tx_and_cage.tsv")
+#write_tsv(tx_and_cage, "tx_and_cage.tsv")
 
 tx_over_cage = tx25_tops[! tx25_tops$gene %in% bwa_tops$gene,] %>% # 672
   select(gene, top_variant)
-write_tsv(tx_over_cage, "tx_over_cage.tsv")
+#write_tsv(tx_over_cage, "tx_over_cage.tsv")
 
 # which genes and variants were newly significant after new annots but not with cage (false positives?)
 added = setdiff(ann_tops$gene, tx25_tops$gene)
@@ -193,7 +193,7 @@ interesting = merge(interesting1, interesting2) %>%
 ann_over_cage = ann_tops[ann_tops$gene %in% interesting$gene,] %>% # 353
   select(gene, top_variant)
 remove(interesting, interesting1, interesting2)
-write_tsv(ann_over_cage, "ann_over_cage.tsv")
+#write_tsv(ann_over_cage, "ann_over_cage.tsv")
 ```
 
 # Optimizing annotations' N
@@ -311,12 +311,12 @@ dim(filter(counts, TPM == 0))[1] / dim(counts)[1] # 57.1%
 ```{r}
 cage_only_top_genes = cage_over_tx$gene
 tx_only_top_genes = tx_over_cage$gene
-both_top_genes = intersect(bwa_tops$gene, tx25_tops$gene)
+both_top_genes = tx_and_cage$gene
 
 counts[,"top_in"] = "None"
-counts[counts$gene %in% cage_only_top_genes,"top_in"] = "cage"
-counts[counts$gene %in% tx_only_top_genes,"top_in"] = "tx"
-counts[counts$gene %in% both_top_genes,"top_in"] = "both"
+counts[counts$gene %in% cage_only_top_genes,"top_in"] = "CAGE"
+counts[counts$gene %in% tx_only_top_genes,"top_in"] = "txrevise"
+counts[counts$gene %in% both_top_genes,"top_in"] = "Both"
 
 counts_common = counts %>%
   filter(gene %in% common_genes)
@@ -337,13 +337,15 @@ dim(filter(counts_tops, TPM == 0))[1] / dim(counts_tops)[1] # 0.1% at 1 TPM
 #remove(counts_joined)
 
 
-dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1] / dim(filter(counts_tops, top_in == "cage"))[1] # <0.1%
-dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.3%
-dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # <0.1%
+dim(filter(counts_tops, TPM == 0, top_in == "CAGE"))[1] / dim(filter(counts_tops, top_in == "CAGE"))[1] # <0.1%
+dim(filter(counts_tops, TPM == 0, top_in == "txrevise"))[1] / dim(filter(counts_tops, top_in == "txrevise"))[1] # 0.3%
+dim(filter(counts_tops, TPM == 0, top_in == "Both"))[1] / dim(filter(counts_tops, top_in == "Both"))[1] # <0.1%
 
 ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
   geom_density(alpha=0.2) +
-  scale_x_log10(limits=c(0.01, 10000), breaks=c(0.01, 0.1, 1, 10, 100, 1000, 10000))
+  scale_x_log10(limits=c(0.01, 10000), breaks=c(0.01, 0.1, 1, 10, 100, 1000, 10000)) + 
+  labs(y="Number of gene ocurrancess", fill="Gene", color="Gene")
+# TODO median lines for each distribution
 
 remove(counts_tops)
 ```
