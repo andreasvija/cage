@@ -164,17 +164,20 @@ length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 56
 ```{r}
 top_variants = rbind(bwa_tops[c("top_variant")], tx25_tops[c("top_variant")], ann_tops[c("top_variant")]) %>%
   unique() # 2774
-#write_delim(top_variants, "variants.txt")
+write_delim(top_variants, "variants.txt")
 remove(top_variants)
 
 cage_over_tx = bwa_tops[! bwa_tops$gene %in% tx25_tops$gene,] %>% # 838
   select(gene, top_variant)
-#write_tsv(cage_over_tx, "cage_over_tx.tsv")
+write_tsv(cage_over_tx, "cage_over_tx.tsv")
+
+tx_and_cage = bwa_tops[bwa_tops$gene %in% tx25_tops$gene,] %>% # 307
+  select(gene, top_variant)
+write_tsv(tx_and_cage, "tx_and_cage.tsv")
 
 tx_over_cage = tx25_tops[! tx25_tops$gene %in% bwa_tops$gene,] %>% # 672
   select(gene, top_variant)
-#write_tsv(tx_over_cage, "tx_over_cage.tsv")
-
+write_tsv(tx_over_cage, "tx_over_cage.tsv")
 
 # which genes and variants were newly significant after new annots but not with cage (false positives?)
 added = setdiff(ann_tops$gene, tx25_tops$gene)
@@ -190,7 +193,7 @@ interesting = merge(interesting1, interesting2) %>%
 ann_over_cage = ann_tops[ann_tops$gene %in% interesting$gene,] %>% # 353
   select(gene, top_variant)
 remove(interesting, interesting1, interesting2)
-#write_tsv(ann_over_cage, "ann_over_cage.tsv")
+write_tsv(ann_over_cage, "ann_over_cage.tsv")
 ```
 
 # Optimizing annotations' N

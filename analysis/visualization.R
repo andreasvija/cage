@@ -1,4 +1,3 @@
-# TODO: <simpleError: object 'sample_id' not found> : no individual -> variant mapping found?
 # TODO: use profiler
 
 wd = "~/cage/analysis/"
@@ -24,7 +23,7 @@ set.seed(123)
 
 option_list <- list(
   make_option(c("--kind"), type="character", default="cage_over_tx",
-              help="What kind of visualization to make - cage_over_tx, tx_over_cage or ann_over_cage", metavar = "path")
+              help="What kind of visualization to make - cage_over_tx, cage_and_tx, tx_over_cage or ann_over_cage", metavar = "path")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
@@ -89,6 +88,7 @@ exons_list1 = GenomicFeatures::exonsBy(upstream1, by = "tx", use.names = TRUE)
 exons_list2 = GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE)
 
 
+print(opt$kind)
 to_visualize = read_tsv(paste0(opt$kind, ".tsv"))
 promoterMetadata = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", col_types="ccciiicii") %>%
   filter(gene_name %in% to_visualize$gene)
@@ -97,6 +97,7 @@ promoterMetadata = read_tsv("../qtlmap_prep/FANTOM5_promoter_annotations.tsv", c
 start_time = Sys.time()
 for (n in c(1: (dim(to_visualize)[1]) )) {
 temp = tryCatch({
+  print(paste0(n, '/', dim(to_visualize)[1]))
 
   observed_gene = to_visualize$gene[n]
   observed_variant = to_visualize$top_variant[n]
