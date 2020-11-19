@@ -25,6 +25,7 @@ library("readr")
 library("stringr")
 library("reshape2")
 library("tidyr")
+library("mixtools")
 
 set.seed(123)
 ```
@@ -162,18 +163,21 @@ length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 56
 
 ```{r}
 top_variants = rbind(bwa_tops[c("top_variant")], tx25_tops[c("top_variant")], ann_tops[c("top_variant")]) %>%
-  unique()
-#write_delim(top_variants, "variants.txt")
+  unique() # 2774
+write_delim(top_variants, "variants.txt")
 remove(top_variants)
 
-cage_over_tx = bwa_tops[! bwa_tops$gene %in% tx25_tops$gene,] %>% # 669
+cage_over_tx = bwa_tops[! bwa_tops$gene %in% tx25_tops$gene,] %>% # 838
   select(gene, top_variant)
-#write_tsv(cage_over_tx, "cage_over_tx.tsv")
+write_tsv(cage_over_tx, "cage_over_tx.tsv")
 
-tx_over_cage = tx25_tops[! tx25_tops$gene %in% bwa_tops$gene,] %>% # 586
+tx_and_cage = bwa_tops[bwa_tops$gene %in% tx25_tops$gene,] %>% # 307
   select(gene, top_variant)
-#write_tsv(tx_over_cage, "tx_over_cage.tsv")
+write_tsv(tx_and_cage, "tx_and_cage.tsv")
 
+tx_over_cage = tx25_tops[! tx25_tops$gene %in% bwa_tops$gene,] %>% # 672
+  select(gene, top_variant)
+write_tsv(tx_over_cage, "tx_over_cage.tsv")
 
 # which genes and variants were newly significant after new annots but not with cage (false positives?)
 added = setdiff(ann_tops$gene, tx25_tops$gene)
@@ -186,10 +190,10 @@ remove(added)
 interesting = merge(interesting1, interesting2) %>%
   filter(p_cage > 0.05, p_ann < 0.05)
 
-ann_over_cage = ann_tops[ann_tops$gene %in% interesting$gene,] %>% # 282
+ann_over_cage = ann_tops[ann_tops$gene %in% interesting$gene,] %>% # 353
   select(gene, top_variant)
 remove(interesting, interesting1, interesting2)
-#write_tsv(ann_over_cage, "ann_over_cage.tsv")
+write_tsv(ann_over_cage, "ann_over_cage.tsv")
 ```
 
 # Optimizing annotations' N
@@ -270,7 +274,7 @@ ggplot(melted_metrics, aes(N, value)) +
   scale_x_continuous(breaks=Ns)
 ```
 
-# Expression
+# Calculate expression
 
 ```{r}
 counts = read_tsv("txrev-25_merged_gene_counts.txt") %>%
@@ -297,7 +301,14 @@ counts[2:length(counts)] = counts[2:length(counts)] / (gene_lengths / 1000)
 scaling_factors = 1000000 / colSums(counts[2:length(counts)])
 counts[2:length(counts)] = sweep(counts[2:length(counts)], 2, scaling_factors, "*")
 
+counts = counts %>%
+  melt(id.vars=c("gene"), variable.name="sample", value.name="TPM")
+dim(filter(counts, TPM == 0))[1] / dim(counts)[1] # 57.1%
+```
 
+# Filter expression
+
+```{r}
 cage_only_top_genes = cage_over_tx$gene
 tx_only_top_genes = tx_over_cage$gene
 both_top_genes = intersect(bwa_tops$gene, tx25_tops$gene)
@@ -307,39 +318,37 @@ counts[counts$gene %in% cage_only_top_genes,"top_in"] = "cage"
 counts[counts$gene %in% tx_only_top_genes,"top_in"] = "tx"
 counts[counts$gene %in% both_top_genes,"top_in"] = "both"
 
-counts = counts %>%
-  melt(id.vars=c("gene", "top_in"), variable.name="sample", value.name="TPM")
-dim(filter(counts, TPM == 0))[1] / dim(counts)[1] # 57.1%
-
 counts_common = counts %>%
   filter(gene %in% common_genes)
-dim(filter(counts_common, TPM == 0))[1] / dim(counts_common)[1] # 12.4%
+dim(filter(counts_common, TPM == 0))[1] / dim(counts_common)[1] # 12.4% at 0 TPM, 0.2% at 1TPM
 
-counts_tops = counts_common %>%
+counts_tops = counts %>%
   filter(top_in != "None")
-dim(filter(counts_tops, TPM == 0))[1] / dim(counts_tops)[1] # 0.7%
+dim(filter(counts_tops, TPM == 0))[1] / dim(counts_tops)[1] # 0.1% at 1 TPM
 
 
-counts$from = "all"
-counts_common$from = "common"
-counts_tops$from = "tops"
-
+#counts$from = "all"
+#counts_common$from = "common"
+#counts_tops$from = "tops"
 #counts_joined = rbind(counts, counts_common, counts_tops)
-remove(counts)
 #ggplot(counts_joined, aes(TPM, fill=from, colour=from)) +
 #  geom_density(alpha=0.1) +
 #  scale_x_log10()
 #remove(counts_joined)
 
 
-dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1] / dim(filter(counts_tops, top_in == "cage"))[1] # 1.0%
-dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.6%
-dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # 0.1%
+dim(filter(counts_tops, TPM == 0, top_in == "cage"))[1] / dim(filter(counts_tops, top_in == "cage"))[1] # <0.1%
+dim(filter(counts_tops, TPM == 0, top_in == "tx"))[1] / dim(filter(counts_tops, top_in == "tx"))[1] # 0.3%
+dim(filter(counts_tops, TPM == 0, top_in == "both"))[1] / dim(filter(counts_tops, top_in == "both"))[1] # <0.1%
 
 ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
   geom_density(alpha=0.2) +
-  scale_x_log10(limits=c(0.01, 1000), breaks=c(0.01, 0.1, 1, 10, 100, 1000))
+  scale_x_log10(limits=c(0.01, 10000), breaks=c(0.01, 0.1, 1, 10, 100, 1000, 10000))
+
+remove(counts_tops)
 ```
+
+# Apply expression filter
 
 ```{r}
 threshold_tpm = 1
@@ -353,11 +362,24 @@ by_genes = counts_common %>%
 ggplot(by_genes, aes(enough_frac)) +
   geom_histogram()
 
-ggplot(by_genes, aes(enough_tpm)) +
-  geom_histogram(alpha=0.6) +
-  scale_x_log10(breaks=c(0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000))
+non_zero_tpms = by_genes %>% filter(enough_tpm > 0)
+non_zero_tpms = as.vector(non_zero_tpms$enough_tpm)
 
 # fit two normal distributions
+to_fit = as.vector(log10(non_zero_tpms))
+model = normalmixEM(to_fit, lambda=c(0.6, 0.4), mu=c(-1, 1), sigma=c(1.5,0.5), k=2)
+
+norm1 = function(x) {return( dnorm(x, mean=model$mu[1], sd=model$sigma[1]) / 2)}
+norm2 = function(x) {return( dnorm(x, mean=model$mu[2], sd=model$sigma[2]) / 2)}
+joined = function(x) {return( norm1(x) + norm2(x) )}
+
+ggplot(mapping=aes(x=to_fit)) +
+  geom_histogram(aes(y=..density.., group="hist"), alpha=0.6, bins=60) +
+  scale_x_continuous(breaks=c(-4, -3, -2, -1, 0, 1, 2, 3, 4), limits=c(-4,4)) + 
+  stat_function(fun=norm1, color="red") + 
+  stat_function(fun=norm2, color="green") + 
+  stat_function(fun=joined, color="black") +
+  labs(x="Required minimum TPM, log10")
 
 enough_genes = by_genes$gene[by_genes$enough_tpm >= threshold_tpm]
 length(enough_genes)/length(beginning_common_genes) # 62.9% (31.5% for 10)

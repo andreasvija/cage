@@ -51,6 +51,10 @@ total = assigned_total + unmapped_total + nofeatures_total
 assigned_total / total #  46.0%
 unmapped_total / total #  0%
 nofeatures_total / total #54.0%
+
+assigned_fracs = assigned / (assigned + unmapped + nofeatures)
+mean(assigned_fracs) # 45.8%
+sd(assigned_fracs) # 6.2%
 ```
 
 
