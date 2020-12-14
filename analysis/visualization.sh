@@ -9,7 +9,7 @@
 module load R/3.6.1
 mkdir plots
 
-for KIND in cage_over_tx cage_and_tx tx_over_cage ann_over_cage
+for KIND in cage_over_tx tx_and_cage tx_over_cage ann_over_cage
 do
   rm -rf plots/$KIND
   mkdir plots/$KIND

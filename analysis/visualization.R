@@ -23,7 +23,7 @@ set.seed(123)
 
 option_list <- list(
   make_option(c("--kind"), type="character", default="cage_over_tx",
-              help="What kind of visualization to make - cage_over_tx, cage_and_tx, tx_over_cage or ann_over_cage", metavar = "path")
+              help="What kind of visualization to make - cage_over_tx, tx_and_cage, tx_over_cage or ann_over_cage", metavar = "path")
 )
 opt <- parse_args(OptionParser(option_list=option_list))
 
