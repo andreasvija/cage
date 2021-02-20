@@ -327,27 +327,20 @@ counts_tops = counts %>%
 dim(filter(counts_tops, TPM == 0))[1] / dim(counts_tops)[1] # 0.1% at 1 TPM
 
 
-#counts$from = "all"
-#counts_common$from = "common"
-#counts_tops$from = "tops"
-#counts_joined = rbind(counts, counts_common, counts_tops)
-#ggplot(counts_joined, aes(TPM, fill=from, colour=from)) +
-#  geom_density(alpha=0.1) +
-#  scale_x_log10()
-#remove(counts_joined)
-
-
 dim(filter(counts_tops, TPM == 0, top_in == "CAGE"))[1] / dim(filter(counts_tops, top_in == "CAGE"))[1] # <0.1%
 dim(filter(counts_tops, TPM == 0, top_in == "txrevise"))[1] / dim(filter(counts_tops, top_in == "txrevise"))[1] # 0.3%
 dim(filter(counts_tops, TPM == 0, top_in == "Both"))[1] / dim(filter(counts_tops, top_in == "Both"))[1] # <0.1%
 
+medians = counts_tops %>%
+  group_by(top_in) %>%
+  summarise(top_in_median=median(TPM))
+counts_tops = inner_join(counts_tops, medians)
+
 ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
   geom_density(alpha=0.2) +
   scale_x_log10(limits=c(0.01, 10000), breaks=c(0.01, 0.1, 1, 10, 100, 1000, 10000)) + 
-  labs(y="Number of gene ocurrancess", fill="Gene", color="Gene")
-# TODO median lines for each distribution
-
-remove(counts_tops)
+  labs(y="Number of gene ocurrences", fill="Significant in", color="Significant in") + 
+  geom_vline(data=medians, aes(xintercept=top_in_median, color=top_in), size=1.5, alpha=0.5)
 ```
 
 # Apply expression filter
