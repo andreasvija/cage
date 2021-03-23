@@ -21,3 +21,5 @@ analysis/txrev-25_merged_gene_counts.txt
 *.Rhistory
 nextflow/
 *.bw
+
+*slurm-*.out

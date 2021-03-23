@@ -26,6 +26,7 @@ library("stringr")
 library("reshape2")
 library("tidyr")
 library("mixtools")
+library("stats")
 
 set.seed(123)
 ```
@@ -260,11 +261,11 @@ ggplot(melted_metrics, aes(N, value)) +
   scale_x_continuous(breaks=Ns)
 
 metrics = tibble(N=Ns,
-                 added_genes = added_genes,
-                 removed_genes = removed_genes,
-                 net_increase = net_increase,
-                 added_in_bwa_tops = added_in_bwa_tops,
-                 frac_added_in_bwa_tops = frac_added_in_bwa_tops)
+                 `Net increase` = net_increase,
+                 #added_genes = added_genes,
+                 `Removed genes` = removed_genes,
+                 #added_in_bwa_tops = added_in_bwa_tops,
+                 `Shared with` = frac_added_in_bwa_tops)
 
 melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
 ggplot(melted_metrics, aes(N, value)) +
@@ -341,6 +342,19 @@ ggplot(counts_tops, aes(x=TPM, y=..count.., fill=top_in, colour=top_in)) +
   scale_x_log10(limits=c(0.01, 10000), breaks=c(0.01, 0.1, 1, 10, 100, 1000, 10000)) + 
   labs(y="Number of gene ocurrences", fill="Significant in", color="Significant in") + 
   geom_vline(data=medians, aes(xintercept=top_in_median, color=top_in), size=1.5, alpha=0.5)
+
+txrevise_log_TPMs = counts_tops %>%
+  filter(top_in == "txrevise", TPM > 0) %>%
+  mutate(logTPM = log10(TPM)) %>%
+  select(logTPM)
+cage_log_TPMs = counts_tops %>%
+  filter(top_in == "CAGE", TPM > 0) %>%
+  mutate(logTPM = log10(TPM)) %>%
+  select(logTPM)
+
+t.test(cage_log_TPMs$logTPM, txrevise_log_TPMs$logTPM, alternative="less") # p-value < 2.2e-16
+# Nonparametric test - Mann-Whitney test / Wilcoxon Rank Sum test
+wilcox.test(cage_log_TPMs$logTPM, txrevise_log_TPMs$logTPM, alternative="less") # p-value < 2.2e-16
 ```
 
 # Apply expression filter
@@ -386,23 +400,35 @@ Run "Filter results", "Analysis", "To visualize" and "Optimizing annotations' N"
 # Visualization
 
 ```{r}
+results_table = tibble(`Min TPM`=c("0", "0.1", "1", "10", "100"), CAGE=c(1208, 1235, 1145, 564, 87), 
+                       Txrevise=c(1073, 1051, 979, 663, 152), `Augmented N=20`=c(1393, 1359, 1287, 868, 201))
+results_table = melt(results_table, id.vars=c("Min TPM"), variable.name="Type", value.name="Result")
+ggplot(results_table, aes(x=`Min TPM`, y=`Result`, color=`Type`, group=`Type`)) + 
+  geom_line() + 
+  geom_point() +
+  scale_x_discrete() + 
+  ylim(0, 1500) + 
+  labs(y="puQTLs found")
+```
+
+```{r}
 removed = setdiff(tx25_tops$gene, ann_tops$gene)
 added = setdiff(ann_tops$gene, tx25_tops$gene)
 
-getgrouping = function(x) {
-  if (x %in% added) {return("Muutus oluliseks")}
-  if (x %in% removed) {return("Kaotas olulisuse")}
-  return("Ei muutunud")
-}
+#getgrouping = function(x) {
+#  if (x %in% added) {return("Muutus oluliseks")}
+#  if (x %in% removed) {return("Kaotas olulisuse")}
+#  return("Ei muutunud")
+#}
 
 comparison = merge(select(bwa_results, gene, p_adjusted_beta_adjusted),
                    select(txrevise25_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "bwa_p", "tx_p")
-comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-comparison = arrange(comparison, grouping)
+#comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
+#comparison = arrange(comparison, grouping)
 
-fig1 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(bwa_p), color=grouping)) +
+fig1 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(bwa_p))) +#, color=grouping)) +
   labs(x="txrevise -log10(p)", y="CAGE -log10(p)", color="Olulisus") +
   geom_smooth(aes(x=-log10(tx_p), y=-log10(bwa_p)), inherit.aes=FALSE, method="lm")
 
@@ -411,11 +437,11 @@ comparison = merge(select(bwa_results, gene, p_adjusted_beta_adjusted),
                    select(annots_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "bwa_p", "ann_p")
-comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-comparison = arrange(comparison, grouping)
+#comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
+#comparison = arrange(comparison, grouping)
 
-fig2 = ggplot(comparison, aes(x=-log10(ann_p), y=-log10(bwa_p), color=grouping)) +
-  labs(x="Täiendatud txrevise -log10(p)", y="CAGE -log10(p)", color="Olulisus") +
+fig2 = ggplot(comparison, aes(x=-log10(ann_p), y=-log10(bwa_p))) +#, color=grouping)) +
+  labs(x="Supplemented txrevise -log10(p)", y="CAGE -log10(p)", color="Olulisus") +
   geom_smooth(aes(x=-log10(ann_p), y=-log10(bwa_p)), inherit.aes=FALSE, method="lm")
 
 
@@ -423,19 +449,20 @@ comparison = merge(select(annots_results, gene, p_adjusted_beta_adjusted),
                    select(txrevise25_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "ann_p", "tx_p")
-comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-comparison = arrange(comparison, grouping)
+#comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
+#comparison = arrange(comparison, grouping)
 
-fig3 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(ann_p), color=grouping)) +
-  labs(x="txrevise -log10(p)", y="Täiendatud txrevise -log10(p)", color="Olulisus") +
+fig3 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(ann_p))) +#, color=grouping)) +
+  labs(x="txrevise -log10(p)", y="Supplemented txrevise -log10(p)", color="Olulisus") +
   geom_smooth(aes(x=-log10(tx_p), y=-log10(ann_p)), inherit.aes=FALSE, method="lm")
 
 
 for (fig in list(fig1, fig2, fig3)) {
   print(fig +
           geom_segment(x=0, y=0, xend=120, yend=120, color="black") +
-          geom_point(aes(color=grouping), alpha=0.4) +
-          scale_color_manual(values=c("dark gray", "red", "green")) +
+          geom_point(alpha=0.4) +
+          #geom_point(aes(color=grouping), alpha=0.4) +
+          #scale_color_manual(values=c("dark gray", "red", "green")) +
           xlim(0,50) + ylim(0,50) +
           theme(legend.position="top"))
 }

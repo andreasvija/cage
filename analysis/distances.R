@@ -108,6 +108,7 @@ sum(gathered$distance > 0) / length(gathered$distance) # 26.1%
 to_plot = gathered[gathered$distance > 0,] # 24 393
 
 sum(gathered$distance > 1000) / length(gathered$distance) # 5.0%
+sum(gathered$distance > 1000) / sum(gathered$distance >= 0) # 5.6%
 
 library("ggplot2")
 ggplot(to_plot) + geom_histogram(aes(x=distance)) + scale_x_log10(breaks=c(1, 10, 100, 1000, 10000, 100000, 1000000))

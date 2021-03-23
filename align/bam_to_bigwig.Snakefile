@@ -27,7 +27,7 @@ rule convert_geuvadis:
 		bedtools genomecov -bg -split -ibam {input.infile} > {params.intermediate}
 		C_COLLATE=C sort -k1,1 -k2,2n {params.intermediate} -o {params.intermediate}
 
-		/gpfs/hpc/home/andreasv/bedGraphToBigWig/bedGraphToBigWig {params.intermediate} {params.chrom_sizes} {output.outfile}
+		/gpfs/space/home/andreasv/bedGraphToBigWig/bedGraphToBigWig {params.intermediate} {params.chrom_sizes} {output.outfile}
 		rm {params.intermediate}
 		"""
 
@@ -48,6 +48,6 @@ rule convert_cage:
 		bedtools genomecov -bg -split -ibam {input.infile} > {params.intermediate}
 		C_COLLATE=C sort -k1,1 -k2,2n {params.intermediate} -o {params.intermediate}
 
-		/gpfs/hpc/home/andreasv/bedGraphToBigWig/bedGraphToBigWig {params.intermediate} {params.chrom_sizes} {output.outfile}
+		/gpfs/space/home/andreasv/bedGraphToBigWig/bedGraphToBigWig {params.intermediate} {params.chrom_sizes} {output.outfile}
 		rm {params.intermediate}
 		"""
