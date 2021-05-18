@@ -19,8 +19,11 @@ grp2 = "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regul
 exons_list1 = GenomicFeatures::exonsBy(GenomicFeatures::makeTxDbFromGFF(grp1), by = "tx", use.names = TRUE)
 exons_list2 = GenomicFeatures::exonsBy(GenomicFeatures::makeTxDbFromGFF(grp2), by = "tx", use.names = TRUE)
 
+all_genes = unique(promoter_annots$gene_name)
+ann_over_cage_genes = unique(read_tsv("ann_over_cage.tsv")$gene)
+
 #for every gene
-for (gene in unique(promoter_annots$gene_name)[1:100]) {
+for (gene in all_genes) {
 
   promoters = promoter_annots %>%
     filter(gene_name == gene)
@@ -34,11 +37,7 @@ for (gene in unique(promoter_annots$gene_name)[1:100]) {
 
   gene_new_transcripts = new_transcripts[names(new_transcripts) %like% paste0(gene, ".new.upstream")]
   if (length(gene_new_transcripts) == 0) {next}
-  print(promoters)
-  print(exons)
-  print(gene_new_transcripts)
 
-  # visualization, requires wiggleplotr
 
   spec = promoters
 
@@ -73,12 +72,10 @@ for (gene in unique(promoter_annots$gene_name)[1:100]) {
   filtered_exons = lapply(exons, pintersect, region_filter, drop.nohit.ranges=TRUE)
   filtered_exons = filtered_exons[lapply(filtered_exons, length) > 0]
   #filtered_exons = pintersect(GRanges(seqnames=chromosome, transcript), region_filter, drop.nohit.ranges=TRUE)
+  if (length(filtered_exons) == 0) {next}
 
-  all_trs = c(filtered_exons, rangeslists, gene_new_transcripts)
-  expanded_trs = c(filtered_exons, rangeslists_wide, gene_new_transcripts)
+  light_blue = c(filtered_exons, rangeslists_wide, as.list(gene_new_transcripts))
+  dark_blue = c(filtered_exons, rangeslists)
 
-  if (length(filtered_exons) > 0) { # TODO: & length(gene_new_transcripts) > 0
-    print(gene)
-    print(plotTranscripts(exons=expanded_trs, cdss=all_trs))
-  }
+  print(plotTranscripts(exons=light_blue, cdss=dark_blue))
 }

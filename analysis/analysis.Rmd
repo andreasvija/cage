@@ -53,7 +53,6 @@ annots_results = annots_results %>%
   mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
   filter(kind=="upstream")
 
-
 upstream1 = GenomicFeatures::makeTxDbFromGFF(
   "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_1.upstream.gff3")
 upstream2 = GenomicFeatures::makeTxDbFromGFF(
@@ -64,7 +63,11 @@ genes1 = unlist(genes1, use.names=FALSE)
 genes2 = unlist(genes2, use.names=FALSE)
 genes = union(sapply(genes1, fun), sapply(genes2, fun))
 
+grp_1_exon_names = names(GenomicFeatures::exonsBy(upstream1, by = "tx", use.names = TRUE))
+grp_2_exon_names = names(GenomicFeatures::exonsBy(upstream2, by = "tx", use.names = TRUE))
+
 remove(upstream1, upstream2, genes1, genes2)
+
 beginning_common_genes = intersect(bwa_results$gene, genes)
 common_genes = beginning_common_genes
 # common genetic variants already only used in qtlmap, but bwa_results' 18k > common genes' 15k
@@ -143,7 +146,7 @@ dim(annots_results)[1] # same
 length(intersect(bwa_results$gene, txrevise25_results$gene)) # 15 275
 length(intersect(bwa_results$gene, annots_results$gene)) # same
 
-sum(txrevise25_results_common$total_phenotypes) # 60 214
+sum(txrevise25_results_common$total_phenotypes) # 60 215
 sum(annots_results_common$total_phenotypes) # 94 385
 sum(annots_results_common$total_phenotypes) - sum(txrevise25_results_common$total_phenotypes) # 34 170
 
@@ -158,6 +161,13 @@ length(intersect(tx25_tops$gene, ann_tops$gene)) # 806
 
 length(intersect(bwa_tops$top_variant, tx25_tops$top_variant)) # 52
 length(intersect(bwa_tops$top_variant, ann_tops$top_variant)) # 56
+
+length(grp_1_exon_names) # 61 453
+length(grp_2_exon_names) # 48 394
+length(intersect(grp_1_exon_names, grp_2_exon_names)) # 0
+length(union(grp_1_exon_names, grp_2_exon_names)) # 109 847
+new_transcripts = readRDS("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-20/new_transcripts_20.rds")
+length(new_transcripts) # 77 869
 ```
 
 # To visualize
@@ -395,15 +405,15 @@ length(enough_genes)/length(beginning_common_genes) # 62.9% (31.5% for 10)
 common_genes = enough_genes
 ```
 
-Run "Filter results", "Analysis", "To visualize" and "Optimizing annotations' N" again now
+Run "Filter results", "Analysis", "To visualize" and optionally "Optimizing annotations' N" again now
 
 # Visualization
 
 ```{r}
 results_table = tibble(`Min TPM`=c("0", "0.1", "1", "10", "100"), CAGE=c(1208, 1235, 1145, 564, 87), 
-                       Txrevise=c(1073, 1051, 979, 663, 152), `Augmented N=20`=c(1393, 1359, 1287, 868, 201))
+                       Txrevise=c(1073, 1051, 979, 663, 152), Augmented=c(1393, 1359, 1287, 868, 201))
 results_table = melt(results_table, id.vars=c("Min TPM"), variable.name="Type", value.name="Result")
-ggplot(results_table, aes(x=`Min TPM`, y=`Result`, color=`Type`, group=`Type`)) + 
+ggplot(results_table, aes(x=`Min TPM`, y=Result, color=Type, group=Type)) + 
   geom_line() + 
   geom_point() +
   scale_x_discrete() + 
@@ -412,24 +422,24 @@ ggplot(results_table, aes(x=`Min TPM`, y=`Result`, color=`Type`, group=`Type`)) 
 ```
 
 ```{r}
-removed = setdiff(tx25_tops$gene, ann_tops$gene)
-added = setdiff(ann_tops$gene, tx25_tops$gene)
+added = setdiff(intersect(bwa_tops$gene, ann_tops$gene), tx25_tops$gene) # 135
+removed = setdiff(intersect(bwa_tops$gene, tx25_tops$gene), ann_tops$gene) # 45
 
-#getgrouping = function(x) {
-#  if (x %in% added) {return("Muutus oluliseks")}
-#  if (x %in% removed) {return("Kaotas olulisuse")}
-#  return("Ei muutunud")
-#}
+getgrouping = function(x) {
+  if (x %in% added) {return("Became significant")}
+  if (x %in% removed) {return("Lost significance")}
+  return("No change")
+}
 
 comparison = merge(select(bwa_results, gene, p_adjusted_beta_adjusted),
                    select(txrevise25_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "bwa_p", "tx_p")
-#comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-#comparison = arrange(comparison, grouping)
+comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
+comparison = arrange(comparison, grouping)
 
-fig1 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(bwa_p))) +#, color=grouping)) +
-  labs(x="txrevise -log10(p)", y="CAGE -log10(p)", color="Olulisus") +
+fig1 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(bwa_p), color=grouping)) +
+  labs(x="txrevise -log10(p)", y="CAGE -log10(p)", color="Change") +
   geom_smooth(aes(x=-log10(tx_p), y=-log10(bwa_p)), inherit.aes=FALSE, method="lm")
 
 
@@ -437,11 +447,11 @@ comparison = merge(select(bwa_results, gene, p_adjusted_beta_adjusted),
                    select(annots_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "bwa_p", "ann_p")
-#comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-#comparison = arrange(comparison, grouping)
+comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
+comparison = arrange(comparison, grouping)
 
-fig2 = ggplot(comparison, aes(x=-log10(ann_p), y=-log10(bwa_p))) +#, color=grouping)) +
-  labs(x="Supplemented txrevise -log10(p)", y="CAGE -log10(p)", color="Olulisus") +
+fig2 = ggplot(comparison, aes(x=-log10(ann_p), y=-log10(bwa_p), color=grouping)) +
+  labs(x="Supplemented txrevise -log10(p)", y="CAGE -log10(p)", color="Change") +
   geom_smooth(aes(x=-log10(ann_p), y=-log10(bwa_p)), inherit.aes=FALSE, method="lm")
 
 
@@ -449,11 +459,11 @@ comparison = merge(select(annots_results, gene, p_adjusted_beta_adjusted),
                    select(txrevise25_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "ann_p", "tx_p")
-#comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-#comparison = arrange(comparison, grouping)
+comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
+comparison = arrange(comparison, grouping)
 
-fig3 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(ann_p))) +#, color=grouping)) +
-  labs(x="txrevise -log10(p)", y="Supplemented txrevise -log10(p)", color="Olulisus") +
+fig3 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(ann_p), color=grouping)) +
+  labs(x="txrevise -log10(p)", y="Supplemented txrevise -log10(p)", color="Change") +
   geom_smooth(aes(x=-log10(tx_p), y=-log10(ann_p)), inherit.aes=FALSE, method="lm")
 
 
@@ -461,8 +471,8 @@ for (fig in list(fig1, fig2, fig3)) {
   print(fig +
           geom_segment(x=0, y=0, xend=120, yend=120, color="black") +
           geom_point(alpha=0.4) +
-          #geom_point(aes(color=grouping), alpha=0.4) +
-          #scale_color_manual(values=c("dark gray", "red", "green")) +
+          geom_point(aes(color=grouping), alpha=0.4) +
+          scale_color_manual(values=c("green", "red", "dark gray")) +
           xlim(0,50) + ylim(0,50) +
           theme(legend.position="top"))
 }
