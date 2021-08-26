@@ -23,7 +23,7 @@ all_genes = unique(promoter_annots$gene_name)
 ann_over_cage_genes = unique(read_tsv("ann_over_cage.tsv")$gene)
 
 #for every gene
-for (gene in all_genes) {
+for (gene in c("ENSG00000143294")) {
 
   promoters = promoter_annots %>%
     filter(gene_name == gene)
