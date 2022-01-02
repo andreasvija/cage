@@ -22,6 +22,11 @@ do
   cat temp_geuvadis.vcf | grep $VARIANT >> variantinfo_geuvadis.vcf
 done < variants.txt
 
+VARIANT=chr2_9387180_T_C
+echo $VARIANT
+cat temp.vcf | grep $VARIANT >> variantinfo.vcf
+cat temp_geuvadis.vcf | grep $VARIANT >> variantinfo_geuvadis.vcf
+
 rm temp.vcf
 rm temp_geuvadis.vcf
 

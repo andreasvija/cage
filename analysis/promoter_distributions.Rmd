@@ -1,0 +1,113 @@
+---
+title: "Promoter distributions"
+subtitle: Andreas Vija
+output:
+  html_document:
+    df_print: paged
+  pdf: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+# Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+wd = "~/cage/analysis/"
+setwd(wd)
+
+set.seed(123)
+```
+
+Kui palju annotatsioone juurde tekkis?
+Kuidas muutus promootorite arvu jaotus?
+Kui palju on sellised geene millel enne oli 1 ja nüüd rohkem kui 1 promootor?
+
+```{r}
+new_transcripts = readRDS("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-20/new_transcripts_20.rds")
+
+grp1 = "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_1.upstream.gff3"
+grp2 = "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_2.upstream.gff3"
+exons_list1 = GenomicFeatures::exonsBy(GenomicFeatures::makeTxDbFromGFF(grp1), by = "tx", use.names = TRUE)
+exons_list2 = GenomicFeatures::exonsBy(GenomicFeatures::makeTxDbFromGFF(grp2), by = "tx", use.names = TRUE)
+```
+
+```{r}
+library("dplyr")
+
+get_gene_counts = function(object) {
+  fun = function(x) {
+    return(strsplit(x, ".", fixed=TRUE)[[1]][1])
+  }
+  
+  object_ = unname(sapply(names(object), fun))
+  object_counts = tibble(gene=object_) %>%
+    group_by(gene) %>%
+    summarise(count=n())
+}
+
+gene_new_transcript_counts = get_gene_counts(new_transcripts)
+gene_grp1_transcript_counts = get_gene_counts(exons_list1)
+gene_grp2_transcript_counts = get_gene_counts(exons_list2)
+remove(new_transcripts, exons_list1, exons_list2)
+
+gene_new_transcript_counts = rename(gene_new_transcript_counts, new_count=count)
+gene_grp1_transcript_counts = rename(gene_grp1_transcript_counts, g1_count=count)
+gene_grp2_transcript_counts = rename(gene_grp2_transcript_counts, g2_count=count)
+
+joined = full_join(gene_new_transcript_counts, gene_grp1_transcript_counts)
+joined = full_join(joined, gene_grp2_transcript_counts)
+
+joined = joined %>%
+  mutate(tx_count=pmax(g1_count, g2_count, na.rm=TRUE)) %>%
+  select(-g1_count, -g2_count)
+```
+
+Kui palju annotatsioone juurde tekkis?
+
+```{r}
+sum(gene_new_transcript_counts$new_count) # 77 869
+dim(gene_new_transcript_counts)[1] # 11 877
+```
+
+Kui palju on sellised geene millel enne oli 1 ja nüüd rohkem kui 1 promootor?
+
+```{r}
+up_from_one = joined %>%
+  filter(tx_count==1, new_count>1)
+dim(up_from_one)[1] # 1650
+```
+
+Kuidas muutus promootorite arvu jaotus?
+
+```{r}
+library("ggplot2")
+
+ggplot(mapping=aes(x=joined$tx_count)) + 
+  geom_histogram(bins=15) +
+  xlim(0, 30) + 
+  ylim(0, 10500) +
+  labs(y="Genes", x="Transcripts", title="Previous gene transcript count distribution")
+
+ggplot(mapping=aes(x=joined$new_count)) + 
+  geom_histogram(bins=15) +
+  xlim(0, 30) + 
+  ylim(0, 10500) +
+  labs(y="Genes", x="Transcripts", title="Additional gene transcript count distribution")
+```
+
+```{r}
+up = joined %>%
+  filter(new_count > tx_count)
+dim(up)[1] # 7098
+
+down = joined %>%
+  filter(new_count < tx_count)
+dim(down)[1] # 2960
+
+same = joined %>%
+  filter(new_count == tx_count)
+dim(same)[1] # 1819
+```

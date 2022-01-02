@@ -53,6 +53,13 @@ annots_results = annots_results %>%
   mutate(kind=sapply(gene, fun, n=2), gene=sapply(gene, fun, n=1)) %>%
   filter(kind=="upstream")
 
+# just to keep a consistent shape
+bwa_results$p_adjusted_beta_adjusted = p.adjust(bwa_results$p_adjusted_beta, method="fdr")
+txrevise25_results$p_adjusted_beta_adjusted = p.adjust(txrevise25_results$p_adjusted_beta, method="fdr")
+annots_results$p_adjusted_beta_adjusted = p.adjust(annots_results$p_adjusted_beta, method="fdr")
+```
+
+```{r}
 upstream1 = GenomicFeatures::makeTxDbFromGFF(
   "txrevise/scripts/processed/Homo_sapiens.GRCh38.96_regular/txrevise_regular.grp_1.upstream.gff3")
 upstream2 = GenomicFeatures::makeTxDbFromGFF(
@@ -83,11 +90,6 @@ annots_results_common = annots_results[annots_results$gene %in% common_genes,]
 bwa_results_common$p_adjusted_beta_adjusted = p.adjust(bwa_results_common$p_adjusted_beta, method="fdr")
 txrevise25_results_common$p_adjusted_beta_adjusted = p.adjust(txrevise25_results_common$p_adjusted_beta, method="fdr")
 annots_results_common$p_adjusted_beta_adjusted = p.adjust(annots_results_common$p_adjusted_beta, method="fdr")
-
-# just to keep a consistent shape
-bwa_results$p_adjusted_beta_adjusted = p.adjust(bwa_results$p_adjusted_beta, method="fdr")
-txrevise25_results$p_adjusted_beta_adjusted = p.adjust(txrevise25_results$p_adjusted_beta, method="fdr")
-annots_results$p_adjusted_beta_adjusted = p.adjust(annots_results$p_adjusted_beta, method="fdr")
 
 
 fill_genes <- function(x, common=FALSE) {
@@ -168,6 +170,7 @@ length(intersect(grp_1_exon_names, grp_2_exon_names)) # 0
 length(union(grp_1_exon_names, grp_2_exon_names)) # 109 847
 new_transcripts = readRDS("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-20/new_transcripts_20.rds")
 length(new_transcripts) # 77 869
+remove(new_transcripts)
 ```
 
 # To visualize
@@ -256,6 +259,9 @@ for (N in Ns) {
   added_in_bwa_tops = c(added_in_bwa_tops, length(added_in_bwa_tops_this))
   frac_added_in_bwa_tops = c(frac_added_in_bwa_tops, length(added_in_bwa_tops_this) / length(added_this))
 }
+remove(new_transcripts)
+remove(trial_results)
+remove(trial_results_common)
 
 metrics = tibble(N=Ns,
                  transcript_count = transcript_count,
@@ -337,6 +343,8 @@ counts_tops = counts %>%
   filter(top_in != "None")
 dim(filter(counts_tops, TPM == 0))[1] / dim(counts_tops)[1] # 0.1% at 1 TPM
 
+remove(counts)
+
 
 dim(filter(counts_tops, TPM == 0, top_in == "CAGE"))[1] / dim(filter(counts_tops, top_in == "CAGE"))[1] # <0.1%
 dim(filter(counts_tops, TPM == 0, top_in == "txrevise"))[1] / dim(filter(counts_tops, top_in == "txrevise"))[1] # 0.3%
@@ -361,10 +369,13 @@ cage_log_TPMs = counts_tops %>%
   filter(top_in == "CAGE", TPM > 0) %>%
   mutate(logTPM = log10(TPM)) %>%
   select(logTPM)
+remove(counts_tops)
 
 t.test(cage_log_TPMs$logTPM, txrevise_log_TPMs$logTPM, alternative="less") # p-value < 2.2e-16
 # Nonparametric test - Mann-Whitney test / Wilcoxon Rank Sum test
 wilcox.test(cage_log_TPMs$logTPM, txrevise_log_TPMs$logTPM, alternative="less") # p-value < 2.2e-16
+
+remove(cage_log_TPMs)
 ```
 
 # Apply expression filter
@@ -377,6 +388,7 @@ by_genes = counts_common %>%
   group_by(gene) %>%
   summarise(enough_frac = mean(TPM >= threshold_tpm),
             enough_tpm = quantile(TPM, probs=1-threshold_frac))
+remove(counts_common)
 
 ggplot(by_genes, aes(enough_frac)) +
   geom_histogram()
@@ -431,15 +443,17 @@ getgrouping = function(x) {
   return("No change")
 }
 
+interesting_gene_bwa = -log10(filter(bwa_results, gene=="ENSG00000151694")["p_adjusted_beta_adjusted"][[1]])
+interesting_gene_tx = -log10(filter(txrevise25_results, gene=="ENSG00000151694")["p_adjusted_beta_adjusted"][[1]])
+interesting_gene_ann = -log10(filter(annots_results, gene=="ENSG00000151694")["p_adjusted_beta_adjusted"][[1]])
+
 comparison = merge(select(bwa_results, gene, p_adjusted_beta_adjusted),
                    select(txrevise25_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "bwa_p", "tx_p")
-comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-comparison = arrange(comparison, grouping)
 
-fig1 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(bwa_p), color=grouping)) +
-  labs(x="txrevise -log10(p)", y="CAGE -log10(p)", color="Change") +
+fig1 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(bwa_p))) +
+  labs(x="txrevise -log10(p)", y="CAGE -log10(p)") +
   geom_smooth(aes(x=-log10(tx_p), y=-log10(bwa_p)), inherit.aes=FALSE, method="lm")
 
 
@@ -447,38 +461,38 @@ comparison = merge(select(bwa_results, gene, p_adjusted_beta_adjusted),
                    select(annots_results, gene, p_adjusted_beta_adjusted),
                    by="gene")
 colnames(comparison) = c("gene", "bwa_p", "ann_p")
-comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
+comparison$grouping = factor(sapply(comparison$gene, getgrouping), 
+                             levels=c("No change", "Became significant", "Lost significance"), 
+                             ordered=TRUE)
 comparison = arrange(comparison, grouping)
 
 fig2 = ggplot(comparison, aes(x=-log10(ann_p), y=-log10(bwa_p), color=grouping)) +
-  labs(x="Supplemented txrevise -log10(p)", y="CAGE -log10(p)", color="Change") +
+  labs(x="Supplemented txrevise -log10(p)", y="CAGE -log10(p)", color="Significance") +
   geom_smooth(aes(x=-log10(ann_p), y=-log10(bwa_p)), inherit.aes=FALSE, method="lm")
 
 
-comparison = merge(select(annots_results, gene, p_adjusted_beta_adjusted),
-                   select(txrevise25_results, gene, p_adjusted_beta_adjusted),
-                   by="gene")
-colnames(comparison) = c("gene", "ann_p", "tx_p")
-comparison$grouping = as.factor(sapply(comparison$gene, getgrouping))
-comparison = arrange(comparison, grouping)
-
-fig3 = ggplot(comparison, aes(x=-log10(tx_p), y=-log10(ann_p), color=grouping)) +
-  labs(x="txrevise -log10(p)", y="Supplemented txrevise -log10(p)", color="Change") +
-  geom_smooth(aes(x=-log10(tx_p), y=-log10(ann_p)), inherit.aes=FALSE, method="lm")
-
-
-for (fig in list(fig1, fig2, fig3)) {
-  print(fig +
-          geom_segment(x=0, y=0, xend=120, yend=120, color="black") +
-          geom_point(alpha=0.4) +
-          geom_point(aes(color=grouping), alpha=0.4) +
-          scale_color_manual(values=c("green", "red", "dark gray")) +
-          xlim(0,50) + ylim(0,50) +
-          theme(legend.position="top"))
-}
+print(fig1 +
+        geom_segment(x=0, y=0, xend=120, yend=120, color="black") +
+        geom_point(alpha=0.8, color="dark gray") +
+        geom_point(aes(x=interesting_gene_tx, y=interesting_gene_bwa), color="blue", size=2.5) +
+        xlim(0,50) + ylim(0,50))
+print(fig2 +
+        geom_segment(x=0, y=0, xend=120, yend=120, color="black") +
+        geom_point(aes(color=grouping), alpha=0.8) +
+        scale_color_manual(values=c("dark gray", "green", "red")) +
+        geom_point(aes(x=interesting_gene_ann, y=interesting_gene_bwa), color="blue", size=2.5) +
+        xlim(0,50) + ylim(0,50) +
+        theme(legend.position="top"))
 ```
 
+# Boxplot
+
 ```{r}
+phenotypes = c(filter(bwa_results, gene == "ENSG00000151694")$top_phenotype[1],
+               filter(txrevise25_results, gene == "ENSG00000151694")$top_phenotype[1],
+               filter(annots_results, gene == "ENSG00000151694")$top_phenotype[1])
+cage_variant = filter(bwa_results, gene == "ENSG00000151694")$top_variant[1]
+
 sample_mapping = read_tsv("../qtlmap_prep/sampleMetadata.tsv") %>%
   select(sample_id, genotype_id) %>%
   mutate(source="cage")
@@ -486,6 +500,7 @@ sample_mapping_ = read_tsv("GEUVADIS_EUR.tsv") %>%
   select(sample_id, genotype_id) %>%
   mutate(source="txrevise")
 sample_mapping = rbind(sample_mapping, sample_mapping_)
+remove(sample_mapping_)
 
 genotypes = read_tsv("variantinfo.vcf")[c(3,10:163)] %>%
   melt(id.vars=c("ID")) %>%
@@ -494,36 +509,47 @@ genotypes_ = read_tsv("variantinfo_geuvadis.vcf")[c(3,10:454)] %>%
   melt(id.vars=c("ID")) %>%
   mutate(source="txrevise")
 genotypes = rbind(genotypes, genotypes_)
+remove(genotypes_)
 
 names(genotypes) = c("variant", "genotype_id", "alleles", "source")
 genotypes = genotypes %>%
   merge(sample_mapping) %>%
-  select(-genotype_id, -source)
+  select(-genotype_id, -source) %>%
+  filter(variant == cage_variant)
 
 mapping = list(0, 1, 1, 2)
 names(mapping) = c("0|0", "0|1", "1|0", "1|1")
 genotypes$alleles = mapping[genotypes$alleles]
 
 counts_bwa = read_tsv("../qtlmap_prep/countMatrix.tsv") %>%
-  melt(id.vars=c("phenotype_id"), variable.name=c("sample_id"), value.name="proportion")
-#counts_tx = read_tsv("/countMatrix_txrevise.tsv") %>% # 2.3G raw
-#  melt(id.vars=c("phenotype_id"), variable.name=c("sample_id"), value.name="proportion")
+  melt(id.vars=c("phenotype_id"), variable.name=c("sample_id"), value.name="proportion") %>%
+  filter(phenotype_id %in% phenotypes)
+#/gpfs/space/home/andreasv/cage/pipeline/txrevise/qcnorm_out/txrevise/normalised/txrev/qtl_group_split_norm/GEUVADIS.LCL.tsv
+counts_tx = read_tsv("countMatrix_txrevise.tsv") %>%
+  melt(id.vars=c("phenotype_id"), variable.name=c("sample_id"), value.name="proportion") %>%
+  filter(phenotype_id %in% phenotypes)
+#/gpfs/space/home/andreasv/cage/pipeline/annots_20/qcnorm_out/txrevise_annots/normalised/txrev/qtl_group_split_norm/GEUVADIS.LCL.tsv
+counts_ann = read_tsv("countMatrix_annots_20.tsv") %>%
+  melt(id.vars=c("phenotype_id"), variable.name=c("sample_id"), value.name="proportion") %>%
+  filter(phenotype_id %in% phenotypes)
 
 #dataset, counts file, promoter, variant
 for (info in list(
-  list(bwa_tops, 1, counts_bwa),
-  list(bwa_tops, 2, counts_bwa)
+  list(bwa_results, counts_bwa, "CAGE"),
+  list(txrevise25_results, counts_tx, "txrevise"),
+  list(annots_results, counts_ann, "Supplemented txrevise")
 )) {
   dataset = info[[1]]
-  n = info[[2]]
-  counts = info[[3]]
-
-  this_promoter = dataset$top_phenotype[n]
-  this_variant = dataset$top_variant[n]
+  counts = info[[2]]
+  title = info[[3]]
+  
+  dataset = filter(dataset, gene == "ENSG00000151694")
+  this_promoter = dataset$top_phenotype[1]
+  print(dataset$p_adjusted_beta_adjusted)
 
   counts_subset = filter(counts, phenotype_id==this_promoter) %>%
     select(sample_id, proportion)
-  genotypes_subset = filter(genotypes, variant==this_variant) %>%
+  genotypes_subset = genotypes %>%
     select(sample_id, alleles)
   to_plot = merge(counts_subset, genotypes_subset)
   to_plot$alleles = as.numeric(to_plot$alleles)
@@ -534,7 +560,7 @@ for (info in list(
         geom_boxplot(alpha=0, lwd=1, color="black") +
         scale_x_continuous(breaks=c(0,1,2)) +
         geom_abline(intercept=coef[1], slope=coef[2], lwd=1) +
-        labs(x="Aternatiivsete alleelide arv", y="Promootori normaliseeritud osakaalud")
+        labs(x="Aternative allele count", y="Normalized promoter proportions", title=title)
   print(p)
 }
 ```

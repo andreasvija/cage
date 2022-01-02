@@ -15,6 +15,7 @@ pipeline/txrevise
 analysis/txrevise/
 analysis/plots*/
 analysis/txrev-25_merged_gene_counts.txt
+analysis/countMatrix*
 *.gff3
 *.vcf.gz
 
