@@ -168,9 +168,14 @@ length(grp_1_exon_names) # 61 453
 length(grp_2_exon_names) # 48 394
 length(intersect(grp_1_exon_names, grp_2_exon_names)) # 0
 length(union(grp_1_exon_names, grp_2_exon_names)) # 109 847
+
 new_transcripts = readRDS("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-20/new_transcripts_20.rds")
 length(new_transcripts) # 77 869
+new_transcript_genes = readRDS("txrevise/scripts/processed/Homo_sapiens.GRCh38.96_CAGE-20/new_transcript_genes_20.rds")
+length(new_transcript_genes) # 11 877
+length(intersect(new_transcript_genes, common_genes)) # 11 349
 remove(new_transcripts)
+remove(new_transcript_genes)
 ```
 
 # To visualize
