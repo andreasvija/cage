@@ -280,20 +280,31 @@ ggplot(melted_metrics, aes(N, value)) +
   geom_point() +
   facet_grid(metric ~ ., scales="free_y") +
   scale_x_continuous(breaks=Ns)
+```
 
+```{r}
 metrics = tibble(N=Ns,
-                 `Net increase` = net_increase,
-                 #added_genes = added_genes,
-                 `Removed genes` = removed_genes,
-                 #added_in_bwa_tops = added_in_bwa_tops,
-                 `Shared with` = frac_added_in_bwa_tops)
+                 net_increase = net_increase,
+                 removed_genes = removed_genes,
+                 frac_added_in_bwa_tops = frac_added_in_bwa_tops)
 
-melted_metrics = melt(metrics, id.vars="N", variable.name="metric")
-ggplot(melted_metrics, aes(N, value)) +
+ggplot(metrics, aes(N, net_increase)) +
   geom_line() +
   geom_point() +
-  facet_grid(metric ~ ., scales="free_y") +
-  scale_x_continuous(breaks=Ns)
+  scale_x_continuous(breaks=Ns) +
+  labs(x='N', y='', title='How many more significant genes in total were found after promoter augmentation?')
+
+ggplot(metrics, aes(N, removed_genes)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks=Ns) +
+  labs(x='N', y='', title='How many genes lost significance after promoter augmentation?')
+
+ggplot(metrics, aes(N, frac_added_in_bwa_tops)) +
+  geom_line() +
+  geom_point() +
+  scale_x_continuous(breaks=Ns) +
+  labs(x='N', y='', title='What fraction of significant genes were also significant when unaugmented?')
 ```
 
 # Calculate expression
@@ -472,7 +483,7 @@ comparison$grouping = factor(sapply(comparison$gene, getgrouping),
 comparison = arrange(comparison, grouping)
 
 fig2 = ggplot(comparison, aes(x=-log10(ann_p), y=-log10(bwa_p), color=grouping)) +
-  labs(x="Supplemented txrevise -log10(p)", y="CAGE -log10(p)", color="Significance") +
+  labs(x="Augmented txrevise -log10(p)", y="CAGE -log10(p)", color="Significance") +
   geom_smooth(aes(x=-log10(ann_p), y=-log10(bwa_p)), inherit.aes=FALSE, method="lm")
 
 
@@ -542,7 +553,7 @@ counts_ann = read_tsv("countMatrix_annots_20.tsv") %>%
 for (info in list(
   list(bwa_results, counts_bwa, "CAGE"),
   list(txrevise25_results, counts_tx, "txrevise"),
-  list(annots_results, counts_ann, "Supplemented txrevise")
+  list(annots_results, counts_ann, "Augmented txrevise")
 )) {
   dataset = info[[1]]
   counts = info[[2]]
