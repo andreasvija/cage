@@ -1,4 +1,6 @@
-# Improved detection of promoter usage QTLs with augmented transcript annotations
+# Improved detection of genetic effects on promoter usage with augmented transcript annotations
+
+[Link to the paper](https://www.biorxiv.org/content/10.1101/2022.07.12.499800v1)
 
 ## Order of running code
 
